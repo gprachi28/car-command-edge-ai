@@ -36,6 +36,9 @@ models/
 # Evaluation results — audio and per-run reports
 evaluation/
 
+# Worktrees
+.worktrees/
+
 # IDE
 .vscode/
 .idea/
