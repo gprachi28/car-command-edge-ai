@@ -1,3 +1,13 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "car-command-edge-ai"
+version = "0.1.0"
+description = "Edge AI pipeline for car voice command understanding on Apple Silicon"
+requires-python = ">=3.11"
+
 [tool.black]
 line-length = 88
 target-version = ["py311"]
