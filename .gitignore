@@ -1,0 +1,42 @@
+# Data — never commit audio files or large datasets
+data/raw/
+data/processed/
+*.wav
+*.mp3
+*.pt
+*.pth
+*.ckpt
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Personal
+
+
+# Models — cloned repos and downloaded weights (can be very large)
+models/
+
+# Model adapters — local experimentation only, not committed
+
+
+# Deprecated metric scripts — kept locally, not tracked
+
+
+# Evaluation results — audio and per-run reports
+evaluation/
+
+# IDE
+.vscode/
+.idea/
+
