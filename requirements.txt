@@ -10,11 +10,9 @@ accelerate>=0.29.0
 mlx-lm>=0.10.0
 
 # Data
-kaggle>=1.6.0
+google-genai>=1.0.0
+ollama>=0.4.0
 python-dotenv>=1.0.0
-
-# Audio (optional / future)
-mlx-whisper>=0.2.0
 
 # Dev / quality
 black==24.4.2

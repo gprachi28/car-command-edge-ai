@@ -8,7 +8,6 @@ Public API:
     - get_processed_dir() -> Path
     - get_models_dir() -> Path
     - MODEL_IDS: dict[str, str]
-    - DATASET_PATH: str
     - LORA_CONFIG: dict[str, float | int | str | list[str]]
     - TRAINING_CONFIG: dict[str, float | int]
 """
@@ -50,41 +49,28 @@ def get_logger(name: str) -> logging.Logger:
 def load_config() -> dict[str, str]:
     """Load environment variables from .env and return config dict.
 
-    Loads variables from .env (or .env.local) using python-dotenv and returns
-    a dict with keys: hf_token, kaggle_username, kaggle_key.
-
-    Empty strings are treated as absent and will raise EnvironmentError.
-
     Returns:
-        Dict with keys: hf_token, kaggle_username, kaggle_key.
+        Dict with keys: hf_token (str), gemini_api_key (str, may be empty).
 
     Raises:
-        EnvironmentError: If any required env var is missing or empty.
+        EnvironmentError: If HF_TOKEN is missing or empty.
     """
     load_dotenv(get_project_root() / ".env")
 
     hf_token = os.getenv("HF_TOKEN")
-    kaggle_username = os.getenv("KAGGLE_USERNAME")
-    kaggle_key = os.getenv("KAGGLE_KEY")
+    gemini_api_key = os.getenv(
+        "GEMINI_API_KEY"
+    )  # optional — only needed for --backend gemini
 
-    missing = []
     if not hf_token:
-        missing.append("HF_TOKEN")
-    if not kaggle_username:
-        missing.append("KAGGLE_USERNAME")
-    if not kaggle_key:
-        missing.append("KAGGLE_KEY")
-
-    if missing:
         raise EnvironmentError(
-            f"Missing required environment variables: {', '.join(missing)}. "
-            "Please set them in .env or OS environment."
+            "Missing required environment variable: HF_TOKEN. "
+            "Please set it in .env or OS environment."
         )
 
     return {
         "hf_token": hf_token,
-        "kaggle_username": kaggle_username,
-        "kaggle_key": kaggle_key,
+        "gemini_api_key": gemini_api_key or "",
     }
 
 
@@ -131,8 +117,6 @@ MODEL_IDS: Final[dict[str, str]] = {
     "qwen": "Qwen/Qwen2.5-3B",
     "smollm2": "HuggingFaceTB/SmolLM2-1.7B",
 }
-
-DATASET_PATH: Final[str] = "oortdatahub/car-command"
 
 LORA_CONFIG: Final[dict[str, float | int | str | list[str]]] = {
     "r": 8,

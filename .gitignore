@@ -1,8 +1,6 @@
-# Data — never commit audio files or large datasets
+# Data — never commit raw/processed data or large model files
 data/raw/
 data/processed/
-*.wav
-*.mp3
 *.pt
 *.pth
 *.ckpt
@@ -22,6 +20,7 @@ venv/
 .DS_Store
 
 # Personal
+docs/edge-ai-automotive-context.md
 
 
 # Models — cloned repos and downloaded weights (can be very large)
@@ -42,4 +41,3 @@ evaluation/
 # IDE
 .vscode/
 .idea/
-
