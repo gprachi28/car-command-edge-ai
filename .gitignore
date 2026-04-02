@@ -21,6 +21,7 @@ venv/
 
 # Personal
 docs/edge-ai-automotive-context.md
+docs/superpowers/
 
 
 # Models — cloned repos and downloaded weights (can be very large)
