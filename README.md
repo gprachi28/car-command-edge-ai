@@ -13,9 +13,39 @@ An edge AI pipeline that trains three efficient LLMs on the [Kaggle Car-Command 
 ## Dataset
 
 - **Source:** [Kaggle Car-Command](https://www.kaggle.com/datasets/oortdatahub/car-command)
-- **Size:** ~2K–5K English car command utterances
-- **Categories:** Climate control, navigation, media, windows/doors, lights
+- **Format:** 8,463 audio recordings (MP3/WAV) across 40 intent classes
+- **Structure:** `<intent name>/<timestamp>/<uuid>.mp3` — folder name is the label
+- **Preprocessing:** mlx-whisper (`whisper-large-v3-mlx`) transcribes audio → text; up to 75 files sampled per intent (~3,000 examples total); `whisper-small` was replaced due to hallucination loops and wrong-language outputs
 - **Split:** 80% train / 20% test
+
+## Architecture
+
+```
+Kaggle Car-Command (8,463 audio files, 40 intents)
+│   Structure: <intent_name>/<timestamp>/<uuid>.mp3
+│
+└─► dataset.py
+        Sample ≤75 files/intent → mlx-whisper transcription (cached)
+        Output: {"command": "turn on the AC", "action": "Turn AC ON"}
+        Split 80/20 → train.jsonl / test.jsonl
+        │
+        └─► finetune.py  (HF TRL + LoRA)
+                3 models: Llama-3.2-3B · Qwen-2.5-3B · SmolLM2-1.7B
+                │
+                └─► quantize.py  (MLX-LM)
+                        4-bit + 8-bit per model → 6 quantized variants
+                        │
+                        └─► benchmark.py
+                                9 variants: TTFT · TPS · RAM · accuracy
+                                │
+                                └─► comparison.py
+                                        RESULTS.md + MODEL_CARD.md
+                                        │
+                                        └─► demo_cli.py
+                                                mic → mlx-whisper STT
+                                                    → quantized LLM
+                                                    → {"intent": "Turn AC ON"}
+```
 
 ## Status
 
