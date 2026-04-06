@@ -1,0 +1,13 @@
+variant,size_mb,ttft_ms,tps,ram_mb,accuracy_pct
+llama-4bit,1740,118.9,122.7,6663,2.0
+llama-8bit,3272,140.3,69.3,6663,4.0
+llama-finetuned,6144,174.5,37.5,6656,4.0
+llama-v2-4bit,1740,120.9,124.7,1928,92.0
+llama-v2-8bit,3272,134.1,71.3,3564,92.0
+llama-v2-finetuned,6144,165.2,38.7,6656,92.0
+qwen-4bit,1667,130.7,122.6,6384,90.0
+qwen-8bit,3138,149.4,72.1,6384,92.0
+qwen-finetuned,5897,181.9,39.7,6377,94.0
+smollm2-4bit,922,55.6,198.7,3610,90.0
+smollm2-8bit,1738,66.4,121.2,3610,94.0
+smollm2-finetuned,3268,84.0,69.3,3602,94.0
