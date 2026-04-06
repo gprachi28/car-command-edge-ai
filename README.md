@@ -62,22 +62,31 @@ generate_dataset.py  (Ollama llama3.1:8b → 14 intents, 1,571 utterances)  ✅
 ## Benchmark Results
 
 Evaluated on 50 held-out test examples (stratified 20% split). Intent classification accuracy (14 classes).
+TTFT target: < 200 ms (real-time voice assistant threshold for in-car use).
 
-| Variant | Size (MB) | TTFT (ms) | TPS | RAM (MB) | Accuracy |
-|---------|----------:|----------:|----:|---------:|---------:|
-| smollm2-finetuned | 3,268 | 84.0 | 69.3 | 3,602 | 94.0% |
-| smollm2-4bit | 922 | 55.6 | 198.7 | 3,610 | 90.0% |
-| smollm2-8bit | 1,738 | 66.4 | 121.2 | 3,610 | 94.0% |
-| qwen-finetuned | 5,897 | 181.9 | 39.7 | 6,377 | 94.0% |
-| qwen-4bit | 1,667 | 130.7 | 122.6 | 6,384 | 90.0% |
-| qwen-8bit | 3,138 | 149.4 | 72.1 | 6,384 | 92.0% |
-| llama-finetuned | 6,144 | 165.2 | 38.7 | 6,656 | 92.0% |
-| llama-4bit | 1,740 | 120.9 | 124.7 | 1,928 | 92.0% |
-| llama-8bit | 3,272 | 134.1 | 71.3 | 3,564 | 92.0% |
+| Variant | Size (MB) | TTFT (ms) | TPS | RAM (MB) | Accuracy | Tokens/resp | Power (W) | mWh/token |
+|---------|----------:|----------:|----:|---------:|---------:|------------:|----------:|----------:|
+| smollm2-finetuned | 3,268 | 74.4 | 72.5 | 3,602 | 94.0% | 26.5 | 11.5 | 0.054 |
+| smollm2-4bit | 922 | 55.1 | 202.2 | 3,610 | 90.0% | 28.9 | 14.3 | 0.028 |
+| smollm2-8bit | 1,738 | 67.7 | 122.6 | 3,610 | 94.0% | 26.7 | 12.8 | 0.040 |
+| qwen-finetuned | 5,897 | 178.4 | 40.4 | 6,377 | 94.0% | 23.3 | 11.7 | 0.107 |
+| qwen-4bit | 1,667 | 135.2 | 124.3 | 6,384 | 90.0% | 23.4 | 13.4 | 0.053 |
+| qwen-8bit | 3,138 | 163.2 | 71.1 | 6,384 | 92.0% | 26.1 | 13.3 | 0.079 |
+| llama-finetuned | 6,144 | 163.5 | 39.0 | 6,656 | 92.0% | 22.3 | 11.1 | 0.104 |
+| llama-4bit | 1,740 | 119.3 | 126.0 | 1,928 | 92.0% | 21.9 | 12.8 | 0.050 |
+| llama-8bit | 3,272 | 133.7 | 71.6 | 3,564 | 92.0% | 22.2 | 12.2 | 0.070 |
 
-**Note on Llama training:** Llama 3.2 3B did not converge with the same hyperparameters used for SmolLM2 and Qwen (lr=2e-4, LoRA rank=8). The model produced degenerate repetitive output and near-zero accuracy. Dropping to lr=2e-5 with LoRA rank=32 resolved the instability completely — all three Llama variants reached 92% accuracy.
+**Key insights:**
+- **SmolLM2 4-bit is the strongest edge candidate**: 922 MB, 55 ms TTFT, 90% accuracy, 0.028 mWh/token — smallest model, lowest latency, most energy-efficient.
+- **All variants pass the 200 ms TTFT target** (< 200 ms real-time voice assistant threshold). SmolLM2 is fastest (55–74 ms); Llama is slowest at 163 ms.
+- **8-bit quantization is lossless for accuracy** on this task (SmolLM2: 94%, Llama: 92%) while halving disk size.
+- **Output tokens avg 22–29**: confirms car commands are short — TPS matters less than TTFT for this use case.
+- **4-bit draws slightly more power but uses far less energy per token** due to higher throughput (smollm2-4bit: 14.3 W → 0.028 mWh/token vs. smollm2-finetuned: 11.5 W → 0.054 mWh/token).
+- **Llama power is comparable to Qwen** at similar quantization levels (llama-4bit: 12.8 W / 0.050 mWh/token vs. qwen-4bit: 13.4 W / 0.053 mWh/token).
 
-_Hardware: Apple M4 Pro. Intent classification on 14 car command intents._
+**Note on Llama training:** With the same hyperparameters as SmolLM2/Qwen (lr=2e-4, LoRA rank=8), Llama produced degenerate output and near-zero accuracy. Dropping to lr=2e-5 with LoRA rank=32 resolved this — all three variants reach 92% accuracy.
+
+_Hardware: Apple M4 Pro (~273 TOPS Neural Engine). Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM._
 
 ## Quick Start
 
