@@ -23,3 +23,5 @@ pytest-cov>=5.0.0
 
 # Utils
 psutil>=5.9.0
+pyyaml>=6.0
+matplotlib>=3.8.0

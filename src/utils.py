@@ -110,6 +110,18 @@ def get_models_dir() -> Path:
     return get_project_root() / "models"
 
 
+def dir_size_mb(path: Path) -> float:
+    """Return total size of all files in a directory in MB.
+
+    Args:
+        path: Directory to measure.
+
+    Returns:
+        Total file size in megabytes.
+    """
+    return sum(f.stat().st_size for f in path.rglob("*") if f.is_file()) / (1024**2)
+
+
 # Shared constants
 
 MODEL_IDS: Final[dict[str, str]] = {

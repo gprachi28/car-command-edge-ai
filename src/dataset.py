@@ -61,7 +61,11 @@ def save_dataset(
 ) -> None:
     """Save train and test splits as JSONL in fine-tuning format.
 
-    Each line: {"text": "Command: <utterance>\\nAction: <intent> <slots_json>"}
+    Each line: {"text": "Command: <utterance>\\nAction: <slots_json>"}
+    Uses TextDataset format (mlx_lm). --mask-prompt is not used because
+    CompletionsDataset in mlx_lm 0.31+ requires a chat template, which
+    SmolLM2/Llama/Qwen base models don't have. Training on the full text
+    is fine — the Command prefix is short and consistent.
 
     Args:
         train: Training examples.
@@ -121,7 +125,7 @@ def log_metadata(
 
 
 def _write_jsonl(examples: list[dict], path: Path) -> None:
-    """Write examples as JSONL in fine-tuning format."""
+    """Write examples as JSONL text format for mlx_lm."""
     with path.open("w") as f:
         for ex in examples:
             action = json.dumps({"intent": ex["intent"], "slots": ex.get("slots", {})})
