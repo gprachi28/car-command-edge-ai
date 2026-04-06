@@ -4,8 +4,10 @@ Reads fused models from models/finetuned/<key>-mlx/ (already in MLX format)
 and applies mlx_lm convert quantization, saving to models/quantized/.
 
 Pipeline per model:
-    models/finetuned/<key>-mlx/  →  mlx_lm convert -q --q-bits 4  →  models/quantized/<key>-4bit/
-                                 →  mlx_lm convert -q --q-bits 8  →  models/quantized/<key>-8bit/
+    models/finetuned/<key>-mlx/  →  mlx_lm convert -q --q-bits 4
+                                 →  models/quantized/<key>-4bit/
+                                 →  mlx_lm convert -q --q-bits 8
+                                 →  models/quantized/<key>-8bit/
 
 Public API:
     - quantize_model(model_key, bits, finetuned_dir, output_dir) -> Path
@@ -54,7 +56,9 @@ def quantize_model(
         subprocess.CalledProcessError: If mlx_lm convert fails.
     """
     if model_key not in MODEL_IDS:
-        raise KeyError(f"Unknown model key '{model_key}'. Choose from: {list(MODEL_IDS)}")
+        raise KeyError(
+            f"Unknown model key '{model_key}'. Choose from: {list(MODEL_IDS)}"
+        )
     if bits not in QUANT_BITS:
         raise ValueError(f"bits must be one of {QUANT_BITS}, got {bits}")
 
@@ -75,7 +79,12 @@ def quantize_model(
         )
 
     if dst_path.exists() and not force:
-        logger.info("Skipping %s %dbit — already exists at %s (use --force to overwrite)", model_key, bits, dst_path)
+        logger.info(
+            "Skipping %s %dbit — already exists at %s (use --force to overwrite)",
+            model_key,
+            bits,
+            dst_path,
+        )
         return dst_path
 
     dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -83,15 +92,24 @@ def quantize_model(
     src_size_mb = dir_size_mb(src_path)
     logger.info(
         "Quantizing %s to %d-bit | src: %.0f MB → %s",
-        model_key, bits, src_size_mb, dst_path,
+        model_key,
+        bits,
+        src_size_mb,
+        dst_path,
     )
 
     cmd = [
-        sys.executable, "-m", "mlx_lm", "convert",
-        "--hf-path", str(src_path),
-        "--mlx-path", str(dst_path),
+        sys.executable,
+        "-m",
+        "mlx_lm",
+        "convert",
+        "--hf-path",
+        str(src_path),
+        "--mlx-path",
+        str(dst_path),
         "--quantize",
-        "--q-bits", str(bits),
+        "--q-bits",
+        str(bits),
     ]
 
     logger.info("[%s | %dbit] Running: %s", model_key, bits, " ".join(cmd))
@@ -100,14 +118,19 @@ def quantize_model(
         raise subprocess.CalledProcessError(
             result.returncode,
             cmd,
-            f"[{model_key} | {bits}bit] mlx_lm convert exited with code {result.returncode}",
+            f"[{model_key} | {bits}bit] mlx_lm convert exited with code"
+            f" {result.returncode}",
         )
 
     dst_size_mb = dir_size_mb(dst_path)
     compression = (1 - dst_size_mb / src_size_mb) * 100 if src_size_mb > 0 else 0
     logger.info(
         "Done: %s %dbit | %.0f MB → %.0f MB (%.1f%% reduction)",
-        model_key, bits, src_size_mb, dst_size_mb, compression,
+        model_key,
+        bits,
+        src_size_mb,
+        dst_size_mb,
+        compression,
     )
     return dst_path
 
@@ -185,4 +208,6 @@ if __name__ == "__main__":
         quantize_all(bits_to_run=bits_to_run, force=args.force)
     else:
         for b in bits_to_run:
-            quantize_model(model_key=args.model, bits=b, force=args.force, run_suffix=args.suffix)
+            quantize_model(
+                model_key=args.model, bits=b, force=args.force, run_suffix=args.suffix
+            )

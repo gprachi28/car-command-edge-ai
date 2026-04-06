@@ -93,9 +93,7 @@ def plot_all(output_dir: Path | None = None) -> list[Path]:
     paths = []
     for log_file in log_files:
         stem = log_file.stem  # e.g. "llama-v2"
-        # Reconstruct model_key + suffix: split on first known key
-        out = plot_loss_curve.__wrapped__ if hasattr(plot_loss_curve, "__wrapped__") else plot_loss_curve
-        # Just call with the full stem as model_key and no suffix
+        # Use the full stem directly — no model_key/suffix split needed
         try:
             p = _plot_from_stem(stem, output_dir)
             paths.append(p)
@@ -152,7 +150,7 @@ if __name__ == "__main__":
         "--model",
         type=str,
         default="all",
-        help="Model stem to plot (e.g. 'llama-v2') or 'all' for every log (default: all)",
+        help="Model stem to plot (e.g. 'llama-v2') or 'all' for every log",
     )
     args = parser.parse_args()
 

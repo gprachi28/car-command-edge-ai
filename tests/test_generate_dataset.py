@@ -2,10 +2,7 @@
 
 import json
 
-import pytest
-
 from src.generate_dataset import _parse_llm_response, _validate_example
-
 
 VALID_SLOT_KEYS = {"zone", "temperature", "mode"}
 
