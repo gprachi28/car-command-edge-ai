@@ -19,7 +19,6 @@ from src.finetune import (
     run_finetune,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -29,7 +28,9 @@ def _write_train_jsonl(path: Path, n: int = 5) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as f:
         for i in range(n):
-            f.write(json.dumps({"text": f"Command: cmd {i}\nAction: intent_{i}"}) + "\n")
+            f.write(
+                json.dumps({"text": f"Command: cmd {i}\nAction: intent_{i}"}) + "\n"
+            )
 
 
 # ---------------------------------------------------------------------------

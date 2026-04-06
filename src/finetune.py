@@ -48,7 +48,9 @@ def load_base_model(
         KeyError: If model_key is not in MODEL_IDS.
     """
     if model_key not in MODEL_IDS:
-        raise KeyError(f"Unknown model key '{model_key}'. Choose from: {list(MODEL_IDS)}")
+        raise KeyError(
+            f"Unknown model key '{model_key}'. Choose from: {list(MODEL_IDS)}"
+        )
 
     model_id = MODEL_IDS[model_key]
     logger.info("Loading base model: %s", model_id)

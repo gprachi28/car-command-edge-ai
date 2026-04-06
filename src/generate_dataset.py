@@ -6,7 +6,8 @@ Entry point. Run from project root:
 
 Options:
     --backend      LLM backend to use: 'ollama' (default) or 'gemini'
-    --model        Model name (default: llama3.1:8b for ollama, gemini-2.0-flash for gemini)
+    --model        Model name (default: llama3.1:8b for ollama,
+                   gemini-2.0-flash for gemini)
     --delay        Seconds to wait between intent API calls (default: 1.0)
     --dry-run      Print prompts without calling any LLM
 """
@@ -133,14 +134,20 @@ INTENT_SCHEMAS: dict[str, dict] = {
     "safety_assist": {
         "count": 100,
         "slots": {
-            "feature": "string: lane_assist|parking_sensors|blind_spot|collision_warning|driver_alert|speed_limiter",
+            "feature": (
+                "string: lane_assist|parking_sensors|blind_spot"
+                "|collision_warning|driver_alert|speed_limiter"
+            ),
             "action": "string: enable|disable|status",
         },
     },
     "vehicle_info": {
         "count": 100,
         "slots": {
-            "query_type": "string: fuel|battery|tire_pressure|oil_level|range|mileage|speed|rpm|temperature",
+            "query_type": (
+                "string: fuel|battery|tire_pressure|oil_level"
+                "|range|mileage|speed|rpm|temperature"
+            ),
         },
     },
     "drive_mode": {
@@ -169,14 +176,16 @@ Slot schema (ONLY use these keys):
 {slot_lines}
 
 Requirements:
-- Use natural, varied language: formal requests, casual commands, questions, abbreviated phrases
+- Use natural, varied language: formal requests, casual commands,
+  questions, abbreviated phrases
 - Cover different slot combinations — not every slot needs to be present in each example
 - Avoid repetitive phrasing patterns; maximise lexical variety
 - Slots must use ONLY valid keys: {valid_keys}
 - Slot values must match the schema descriptions
 
 Respond with ONLY a valid JSON object in this exact format:
-{{"examples": [{{"utterance": "<voice command text>", "slots": {{<slot key/value pairs or {{}}}}}}]}}
+{{"examples": [{{"utterance": "<voice command text>",
+  "slots": {{<slot key/value pairs or {{}}}}}}]}}
 
 Do not include any explanation, markdown, or text outside the JSON."""
 
@@ -347,7 +356,9 @@ def _load_raw_intent(raw_dir: Path, intent: str) -> list[dict] | None:
                 except json.JSONDecodeError:
                     dropped += 1
     if dropped:
-        logger.warning("  %s: dropped %d corrupt lines while loading", path.name, dropped)
+        logger.warning(
+            "  %s: dropped %d corrupt lines while loading", path.name, dropped
+        )
     return examples
 
 
@@ -392,7 +403,9 @@ def generate_intent(
         return existing
 
     if dry_run:
-        logger.info("  [DRY RUN] Would generate %d examples for '%s'", schema["count"], intent)
+        logger.info(
+            "  [DRY RUN] Would generate %d examples for '%s'", schema["count"], intent
+        )
         return []
 
     if backend == "ollama":
@@ -458,7 +471,9 @@ def _save_metadata(train: list[dict], test: list[dict], output_dir: Path) -> Non
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate synthetic car command dataset")
+    parser = argparse.ArgumentParser(
+        description="Generate synthetic car command dataset"
+    )
     parser.add_argument(
         "--backend",
         choices=["ollama", "gemini"],
@@ -468,7 +483,7 @@ def main() -> None:
     parser.add_argument(
         "--model",
         default=None,
-        help="Model name (default: llama3.1:8b for ollama, gemini-2.0-flash for gemini)",
+        help="Model name (default: llama3.1:8b for ollama, gemini-2.0-flash for gemini)",  # noqa: E501
     )
     parser.add_argument(
         "--delay",
@@ -483,7 +498,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    model = args.model or (OLLAMA_DEFAULT_MODEL if args.backend == "ollama" else GEMINI_DEFAULT_MODEL)
+    model = args.model or (
+        OLLAMA_DEFAULT_MODEL if args.backend == "ollama" else GEMINI_DEFAULT_MODEL
+    )
 
     gemini_client = None
     if args.backend == "gemini" and not args.dry_run:
@@ -501,7 +518,13 @@ def main() -> None:
 
     gemini_calls = 0
     for i, (intent, schema) in enumerate(INTENT_SCHEMAS.items(), start=1):
-        logger.info("[%d/%d] Intent: %s (%d examples)", i, total_intents, intent, schema["count"])
+        logger.info(
+            "[%d/%d] Intent: %s (%d examples)",
+            i,
+            total_intents,
+            intent,
+            schema["count"],
+        )
         is_cached = (get_data_dir() / "raw" / "synthetic" / f"{intent}.jsonl").exists()
         if args.backend == "gemini" and not args.dry_run and not is_cached:
             if gemini_calls > 0:
@@ -534,14 +557,21 @@ def main() -> None:
 
     removed = len(all_examples) - len(deduped)
     if removed:
-        logger.info("Deduplication: removed %d duplicates (%d → %d)", removed, len(all_examples), len(deduped))
+        logger.info(
+            "Deduplication: removed %d duplicates (%d → %d)",
+            removed,
+            len(all_examples),
+            len(deduped),
+        )
 
     train, test = split_dataset(deduped, train_ratio=0.8, seed=42)
     save_dataset(train, test, output_dir=processed_dir)
     _save_metadata(train, test, processed_dir)
     log_metadata(train, test)
 
-    logger.info("Dataset generation complete: %d train / %d test", len(train), len(test))
+    logger.info(
+        "Dataset generation complete: %d train / %d test", len(train), len(test)
+    )
 
 
 if __name__ == "__main__":
