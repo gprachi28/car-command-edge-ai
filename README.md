@@ -75,7 +75,7 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
 |---|---|
 | **[Full Results & Analysis](docs/RESULTS.md)** | Fine-tuning, quantization, benchmark table, per-intent slot accuracy breakdown |
 | **[Model Card](docs/MODEL_CARD.md)** | Architecture, training details, limitations, recommendations |
-| Setup guide | `docs/SETUP.md` |
+| **[Setup Guide](docs/SETUP.md)** | Environment setup, dependencies, and reproduction steps |
 
 ---
 
