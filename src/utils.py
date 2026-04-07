@@ -7,6 +7,7 @@ Public API:
     - get_data_dir() -> Path
     - get_processed_dir() -> Path
     - get_models_dir() -> Path
+    - build_variants(models_dir: Path) -> dict[str, Path]
     - MODEL_IDS: dict[str, str]
     - LORA_CONFIG: dict[str, float | int | str | list[str]]
     - TRAINING_CONFIG: dict[str, float | int]
@@ -146,3 +147,31 @@ TRAINING_CONFIG: Final[dict[str, float | int]] = {
     "warmup_steps": 100,
     "weight_decay": 0.01,
 }
+
+
+def build_variants(models_dir: Path) -> dict[str, Path]:
+    """Return ordered mapping of variant key -> model directory path.
+
+    Single source of truth for all 9 benchmarked variants. Used by both
+    benchmark.py and demo_cli.py to avoid path drift (especially for the
+    Llama v2 re-trained paths).
+
+    Args:
+        models_dir: Project models/ directory (from get_models_dir()).
+
+    Returns:
+        Dict mapping variant key (e.g. "smollm2-4bit") to absolute Path.
+    """
+    finetuned = models_dir / "finetuned"
+    quantized = models_dir / "quantized"
+    return {
+        "smollm2-finetuned": finetuned / "smollm2-mlx",
+        "smollm2-4bit": quantized / "smollm2-4bit",
+        "smollm2-8bit": quantized / "smollm2-8bit",
+        "qwen-finetuned": finetuned / "qwen-mlx",
+        "qwen-4bit": quantized / "qwen-4bit",
+        "qwen-8bit": quantized / "qwen-8bit",
+        "llama-finetuned": finetuned / "llama-mlx-v2",
+        "llama-4bit": quantized / "llama-4bit-v2",
+        "llama-8bit": quantized / "llama-8bit-v2",
+    }

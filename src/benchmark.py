@@ -46,6 +46,7 @@ import mlx.core as mx
 from mlx_lm import load, stream_generate
 
 from src.utils import (
+    build_variants,
     dir_size_mb,
     get_data_dir,
     get_logger,
@@ -63,23 +64,7 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Variant registry
 # ---------------------------------------------------------------------------
-
-
-def _build_variants(models_dir: Path) -> dict[str, Path]:
-    """Return ordered dict of variant_key -> model_path."""
-    finetuned = models_dir / "finetuned"
-    quantized = models_dir / "quantized"
-    return {
-        "smollm2-finetuned": finetuned / "smollm2-mlx",
-        "smollm2-4bit": quantized / "smollm2-4bit",
-        "smollm2-8bit": quantized / "smollm2-8bit",
-        "qwen-finetuned": finetuned / "qwen-mlx",
-        "qwen-4bit": quantized / "qwen-4bit",
-        "qwen-8bit": quantized / "qwen-8bit",
-        "llama-finetuned": finetuned / "llama-mlx-v2",
-        "llama-4bit": quantized / "llama-4bit-v2",
-        "llama-8bit": quantized / "llama-8bit-v2",
-    }
+# build_variants() is the single source of truth — imported from utils.
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +280,12 @@ def _power_monitor(interval_ms: int = 500) -> Generator[list[float], None, None]
 # ---------------------------------------------------------------------------
 
 
+@contextmanager
+def _null_context() -> Generator[list, None, None]:
+    """No-op context manager used when measure_power=False."""
+    yield []
+
+
 def run_benchmark(
     variant_key: str,
     n_samples: int | None = None,
@@ -322,7 +313,7 @@ def run_benchmark(
     if processed_dir is None:
         processed_dir = get_processed_dir()
 
-    variants = _build_variants(models_dir)
+    variants = build_variants(models_dir)
     if variant_key not in variants:
         raise KeyError(
             f"Unknown variant '{variant_key}'. Choose from: {list(variants)}"
@@ -458,12 +449,6 @@ def run_benchmark(
     return result
 
 
-@contextmanager
-def _null_context() -> Generator[list, None, None]:
-    """No-op context manager used when measure_power=False."""
-    yield []
-
-
 # ---------------------------------------------------------------------------
 # Full benchmark sweep
 # ---------------------------------------------------------------------------
@@ -492,7 +477,7 @@ def benchmark_all(
     if processed_dir is None:
         processed_dir = get_processed_dir()
 
-    variants = _build_variants(models_dir)
+    variants = build_variants(models_dir)
     results = []
 
     for variant_key in variants:
@@ -601,7 +586,7 @@ if __name__ == "__main__":
     import argparse
 
     models_dir = get_models_dir()
-    variants = _build_variants(models_dir)
+    variants = build_variants(models_dir)
 
     parser = argparse.ArgumentParser(
         description="Benchmark fine-tuned and quantized models"
