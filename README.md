@@ -123,6 +123,8 @@ python -m src.demo_cli --model smollm2-4bit
 
 > Requires `HF_TOKEN` in `.env` for Llama 3.2 3B (gated model). See `.env.example`.
 
+![Demo CLI](docs/assets/demo_cli.png)
+
 ---
 
 ## Project Structure
