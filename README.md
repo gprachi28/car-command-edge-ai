@@ -67,6 +67,8 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
 - **All 9 variants meet the 200 ms TTFT target** in isolation. SmolLM2 variants (55–79 ms) leave substantial headroom for a full STT → LLM → TTS pipeline; Qwen BF16 (180 ms) and Llama BF16 (166 ms) leave little margin.
 - **SmolLM2 beats both larger models** on intent accuracy at every quantization level, despite being the smallest.
 
+> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for SmolLM2-4bit, still well within the 200 ms automotive target.
+
 ---
 
 ## 📄 Docs
@@ -116,7 +118,7 @@ python -m src.quantize
 bash scripts/run_benchmark.sh
 
 # Run the interactive demo
-python src/demo_cli.py --model smollm2-1.7b-4bit
+python -m src.demo_cli --model smollm2-4bit
 ```
 
 > Requires `HF_TOKEN` in `.env` for Llama 3.2 3B (gated model). See `.env.example`.

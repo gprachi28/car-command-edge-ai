@@ -58,6 +58,8 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 | llama-8bit | 3,272 | 133.6 | 70.9 | 3,568 | 95.6% | 51.7% | 21.9 | 13.3 | 0.077 |
 
 > **Note on latency:** All 9 variants meet the 200 ms TTFT target in isolation. However, a production voice pipeline also includes STT (speech-to-text) and TTS (text-to-speech) stages. SmolLM2 variants (55–79 ms) leave substantial headroom for the full pipeline; Qwen BF16 at 180 ms and Llama BF16 at 166 ms leave very little margin and would be marginal in a STT → LLM → TTS chain on constrained hardware.
+>
+> **Note on benchmark vs interactive TTFT:** These numbers are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use, macOS throttles the GPU clock and spins down compute units during the pause while a user types or speaks. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for SmolLM2-4bit. Both figures pass the 200 ms automotive target; the benchmark number reflects sustained throughput, the interactive number is more representative of real driver use.
 
 ---
 

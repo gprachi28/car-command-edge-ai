@@ -67,7 +67,7 @@ Action: {"intent": "window_control", "slots": {"window": "sunroof", "action": "o
 - **Size:** 1,571 utterances across 14 intents (1,252 train / 319 test), stratified 80/20 split
 - **Intents:** `set_climate`, `navigate`, `play_media`, `adjust_volume`, `call_contact`, `read_message`, `seat_control`, `set_lighting`, `window_control`, `cruise_control`, `safety_assist`, `vehicle_info`, `drive_mode`, `connectivity`
 - **Format:** `{"text": "Command: <utterance>\nAction: <json>"}`
-- **Why synthetic:** Avoids domain-transfer confounds from NLU datasets (SNIPS, SLURP) with mismatched intent schemas; keeps the benchmark clean.
+- **Why synthetic:** No existing public dataset covers this intent+slot schema; synthetic generation ensures clean, domain-matched training and evaluation data.
 
 ### Hyperparameters
 
@@ -84,9 +84,7 @@ Action: {"intent": "window_control", "slots": {"window": "sunroof", "action": "o
 | Trainable params | 0.18% (3.0M) | 0.11% (3.3M) | ~0.4% |
 | Peak training RAM | 4.2 GB | 7.1 GB | 7.6 GB |
 
-Gradient accumulation of 2 means weights are updated every 2 batches, so each update sees 4 × 2 = 8 examples. This gives the same training dynamics as a physical batch of 8 at half the peak RAM cost per step.
-
-**Note on Llama:** lr=2e-4 / rank=8 caused training divergence — the model memorised a degenerate repetitive output pattern with near-zero accuracy. lr=2e-5 and rank=32 resolved this completely. SmolLM2 and Qwen used identical hyperparameters to allow a controlled comparison.
+**Note on Llama:** Llama 3.2 3B required lr=2e-5 and LoRA rank=32 for stable convergence; SmolLM2 and Qwen used identical hyperparameters (lr=2e-4, rank=8).
 
 ### Training Results (val loss start → end)
 
@@ -110,13 +108,13 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 | Qwen 2.5 3B | 5,897 MB | 1,667 MB | 3,138 MB | 71.7% | 46.8% |
 | Llama 3.2 3B | 6,144 MB | 1,740 MB | 3,272 MB | 71.7% | 46.7% |
 
-Compression ratios are near-identical across all three models, as expected for uniform linear quantization. All 9 quantized variants verified loadable before benchmarking.
+Compression ratios are near-identical across all three models.
 
 ---
 
 ## Benchmark Results
 
-Evaluated on 317 held-out test examples. Each variant run in a separate process for accurate peak RAM measurement. Power measured via macOS `powermetrics` (GPU + CPU combined).
+Evaluated on 317 held-out test examples (stratified 20% hold-out, 14 intent classes). Hardware: Apple M4 Pro.
 
 | Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Power (W) | Energy/token (mWh) ↓ |
 |---------|----------:|----------:|----:|---------:|---------:|----------:|----------:|-------------------:|
@@ -131,8 +129,6 @@ Evaluated on 317 held-out test examples. Each variant run in a separate process 
 | llama-8bit | 3,272 | 133.6 | 70.9 | 3,568 | 95.6% | 51.7% | 13.3 | 0.077 |
 
 > **Note on latency:** All 9 variants meet the 200 ms TTFT target when measured in isolation. In a full voice pipeline (STT → LLM → TTS), SmolLM2 variants (55–79 ms) leave substantial headroom; Qwen BF16 (180 ms) and Llama BF16 (166 ms) leave very little margin and would be at risk on constrained automotive hardware once STT and TTS latency is added.
-
-See `RESULTS.md` for the full per-intent slot accuracy breakdown and extended analysis.
 
 ---
 
@@ -174,7 +170,7 @@ See `RESULTS.md` for the full per-intent slot accuracy breakdown and extended an
 | Tightest memory / lowest latency | `smollm2-4bit` | 922 MB, 54.8 ms TTFT, 95% accuracy, 0.034 mWh/token |
 | Highest accuracy | `smollm2-8bit` | 96.2% intent accuracy, 64.5 ms TTFT, 1,969 MB RAM |
 | BF16 reference baseline | `smollm2-finetuned` | Best slot accuracy (59.6%), no quantization loss |
-| Avoid | `qwen-*` | Consistently lower accuracy + higher parse failure rate |
+| Accuracy/size trade-off | `qwen-4bit` | 1,667 MB, 92.4% accuracy — smaller than Llama-4bit but lower accuracy than SmolLM2 |
 
 ---
 
@@ -203,7 +199,7 @@ See `docs/SETUP.md` for full environment setup. Seed: 42. All runs deterministic
 ```python
 from mlx_lm import load, generate
 
-model, tokenizer = load("models/quantized/smollm2-1.7b-4bit")
+model, tokenizer = load("models/quantized/smollm2-4bit")
 
 prompt = "Command: Turn off the fan for the rear zone.\nAction:"
 response = generate(model, tokenizer, prompt=prompt, max_tokens=80)
@@ -213,7 +209,7 @@ response = generate(model, tokenizer, prompt=prompt, max_tokens=80)
 Or use the interactive CLI:
 
 ```bash
-python src/demo_cli.py --model smollm2-1.7b-4bit
+python -m src.demo_cli --model smollm2-4bit
 ```
 
 ---
