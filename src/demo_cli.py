@@ -105,7 +105,7 @@ def main() -> None:
     print(f"\nCar Command Assistant")
     print(f"Model : {args.model}")
     print(f"Size  : {size_mb:.0f} MB")
-    print(f"Path  : {model_path}")
+    print(f"Path  : {model_path.relative_to(model_path.parents[2])}")
     print("\nLoading model...")
 
     model, tokenizer = load(str(model_path))
