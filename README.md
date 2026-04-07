@@ -7,7 +7,9 @@ Fine-tuning and quantizing small language models for English car voice command u
 An edge AI pipeline that trains three efficient LLMs on a synthetic car command dataset (14 intents, 1,571 utterances) and compares their performance across quantization levels. The goal is to demonstrate the latency/memory/accuracy trade-offs of running compressed models on-device.
 
 **Models:** Llama 3.2 3B · Qwen 2.5 3B · SmolLM2 1.7B
+
 **Quantization:** 4-bit and 8-bit MLX format
+
 **Hardware:** Apple M4 Pro
 
 ## Dataset
@@ -18,10 +20,23 @@ An edge AI pipeline that trains three efficient LLMs on a synthetic car command 
 - **Format:** `Command: <utterance>\nAction: {"intent": "...", "slots": {...}}`
 - **Generation:** Batched (20 examples/call), validated, resume-safe incremental writes
 
+**Examples from the dataset:**
+
+| Command | Intent | Slots |
+|---------|--------|-------|
+| `Turn off the fan for rear zone.` | `set_climate` | `{"fan_speed": null, "zone": "rear"}` |
+| `Turn the heat up on all seats to high` | `seat_control` | `{"heat": "high", "seat": "all"}` |
+| `Open the sunroof about halfway through!` | `window_control` | `{"window": "sunroof", "action": "open", "percentage": 50}` |
+| `Where is the nearest gas station?` | `navigate` | `{"destination_type": "gas_station"}` |
+| `How's the lane assist doing?` | `safety_assist` | `{"feature": "lane_assist", "action": "status"}` |
+| `Switch to sport, please` | `drive_mode` | `{"mode": "sport"}` |
+
+The model is trained to produce the `Action` JSON given the `Command` — intent classification plus structured slot extraction in one pass.
+
 ## Architecture
 
 ```
-generate_dataset.py  (Ollama llama3.1:8b → 14 intents, 1,571 utterances)  ✅
+generate_dataset.py  (Ollama llama3.1:8b → 14 intents, 1,571 utterances)
         Stratified split 80/20 → train.jsonl / test.jsonl
         │
         └─► finetune_mlx.py  (MLX-LM LoRA — native Apple Silicon)
@@ -61,7 +76,7 @@ generate_dataset.py  (Ollama llama3.1:8b → 14 intents, 1,571 utterances)  ✅
 | Qwen 2.5 3B | 3.105 → 0.727 | 0.515 | 7.1 GB | 2e-4 | 8 |
 | Llama 3.2 3B | — → 0.690 | 0.428 | 7.6 GB | 2e-5 | 32 |
 
-**Note on Llama:** lr=2e-4 / rank=8 caused training divergence (degenerate repetitive output, near-zero accuracy). Dropping to lr=2e-5 and rank=32 resolved this.
+**Note on Llama training:** With the same hyperparameters as SmolLM2/Qwen (lr=2e-4, LoRA rank=8), Llama produced degenerate output and near-zero accuracy. Dropping to lr=2e-5 with LoRA rank=32 resolved this.
 
 ## Quantization Results
 
@@ -75,7 +90,7 @@ generate_dataset.py  (Ollama llama3.1:8b → 14 intents, 1,571 utterances)  ✅
 
 Evaluated on 319 held-out test examples (317 eval + 2 warmup discarded), stratified 20% split. Intent classification accuracy (14 classes).
 TTFT target: < 200 ms (real-time voice assistant threshold for in-car use). Each variant benchmarked in its own process for accurate RAM measurement.
-Hardware: Apple M4 Pro.
+
 
 | Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Output tokens ↓ | Power (W) ↓ | Energy/token (mWh) ↓ |
 |---------|----------:|----------:|----:|---------:|---------:|----------:|------------:|----------:|----------:|
@@ -99,7 +114,7 @@ Hardware: Apple M4 Pro.
 - **Slot accuracy is 47–60%, well below intent accuracy.** The gap is primarily caused by models generating extra plausible slots not in the ground truth (e.g. adding `"brightness": 100` when the label omits it). Exact-match scoring penalises any extra key, so these numbers understate true extraction quality. SmolLM2-finetuned leads at 59.6%; Qwen is lowest at 47–48%.
 - **Output tokens avg 21–27**: car commands are short — TPS matters less than TTFT for this use case.
 
-**Note on Llama training:** With the same hyperparameters as SmolLM2/Qwen (lr=2e-4, LoRA rank=8), Llama produced degenerate output and near-zero accuracy. Dropping to lr=2e-5 with LoRA rank=32 resolved this.
+
 
 _Hardware: Apple M4 Pro (~273 TOPS Neural Engine). Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM._
 
