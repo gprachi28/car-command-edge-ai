@@ -1,7 +1,7 @@
 # Car Command Edge AI
 
 > Fine-tuning, quantizing, and benchmarking small language models for on-device car voice command understanding — Apple Silicon (M4 Pro).
-
+<img width="1114" height="329" alt="demo" src="https://github.com/user-attachments/assets/2817e2de-f007-4b7d-8688-17f50b00dacb" />
 ---
 
 ## What It Does
@@ -20,6 +20,7 @@ An end-to-end edge AI pipeline that takes a natural language car command and pro
 ```
 
 Three compact LLMs are fine-tuned with LoRA, quantized to 4-bit and 8-bit, and benchmarked across 9 variants for latency, memory, accuracy, and energy.
+
 
 ---
 
@@ -123,7 +124,8 @@ python -m src.demo_cli --model smollm2-4bit
 
 > Requires `HF_TOKEN` in `.env` for Llama 3.2 3B (gated model). See `.env.example`.
 
-![Demo CLI](docs/demo.png)
+
+
 
 ---
 
