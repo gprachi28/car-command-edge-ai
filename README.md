@@ -1,26 +1,87 @@
 # Car Command Edge AI
 
-Fine-tuning and quantizing small language models for English car voice command understanding, benchmarked on Apple Silicon (M4 Pro).
+> Fine-tuning, quantizing, and benchmarking small language models for on-device car voice command understanding — Apple Silicon (M4 Pro).
 
-## What this is
+---
 
-An edge AI pipeline that trains three efficient LLMs on a synthetic car command dataset (14 intents, 1,571 utterances) and compares their performance across quantization levels. The goal is to demonstrate the latency/memory/accuracy trade-offs of running compressed models on-device.
+## What It Does
 
-**Models:** Llama 3.2 3B · Qwen 2.5 3B · SmolLM2 1.7B
+An end-to-end edge AI pipeline that takes a natural language car command and produces structured intent + slot JSON:
 
-**Quantization:** 4-bit and 8-bit MLX format
+```
+> "Turn off the fan for the rear zone."
+  {"intent": "set_climate", "slots": {"fan_speed": null, "zone": "rear"}}
 
-**Hardware:** Apple M4 Pro
+> "Open the sunroof about halfway."
+  {"intent": "window_control", "slots": {"window": "sunroof", "action": "open", "percentage": 50}}
+
+> "Navigate to the nearest gas station."
+  {"intent": "navigate", "slots": {"destination_type": "gas_station"}}
+```
+
+Three compact LLMs are fine-tuned with LoRA, quantized to 4-bit and 8-bit, and benchmarked across 9 variants for latency, memory, accuracy, and energy.
+
+---
+
+## Models & Stack
+
+| | |
+|---|---|
+| **Models** | Llama 3.2 3B · Qwen 2.5 3B · SmolLM2 1.7B |
+| **Fine-tuning** | MLX-LM LoRA — native Apple Silicon, Metal backend |
+| **Quantization** | 4-bit and 8-bit MLX format |
+| **Dataset** | Synthetic — 14 intents, 1,571 utterances (Ollama `llama3.1:8b`) |
+| **Hardware** | Apple M4 Pro (~273 TOPS) |
+
+---
+
+## Pipeline
+
+```
+generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
+                      Stratified 80/20 split → train.jsonl / test.jsonl
+        │
+        └─► finetune_mlx.py    MLX-LM LoRA — 3 models, native Apple Silicon
+                │
+                └─► quantize.py    4-bit + 8-bit per model → 6 quantized variants
+                        │
+                        └─► benchmark.py    9 variants: TTFT · TPS · RAM · accuracy · energy
+                                │
+                                └─► demo_cli.py    text input → structured JSON output
+```
+
+---
+
+## Key Results
+
+| Variant | Size (MB) | TTFT (ms) | Intent acc | Energy/token |
+|---------|----------:|----------:|-----------:|-------------:|
+| **smollm2-4bit** | **922** | **54.8** | 95.0% | **0.034 mWh** |
+| smollm2-8bit | 1,738 | 64.5 | **96.2%** | 0.046 mWh |
+| smollm2-finetuned | 3,268 | 78.6 | 95.9% | 0.060 mWh |
+| llama-4bit | 1,740 | 119.7 | 95.3% | 0.054 mWh |
+| qwen-4bit | 1,667 | 136.9 | 92.4% | 0.057 mWh |
+
+- **SmolLM2-4bit** is the top edge candidate: smallest (922 MB), fastest (54.8 ms TTFT), most energy-efficient (0.034 mWh/token) at 95% accuracy.
+- **4-bit quantization costs ≤1% accuracy** across all models while cutting size by ~72%.
+- **All 9 variants meet the 200 ms TTFT target** in isolation. SmolLM2 variants (55–79 ms) leave substantial headroom for a full STT → LLM → TTS pipeline; Qwen BF16 (180 ms) and Llama BF16 (166 ms) leave little margin.
+- **SmolLM2 beats both larger models** on intent accuracy at every quantization level, despite being the smallest.
+
+---
+
+## 📄 Docs
+
+| | |
+|---|---|
+| **[Full Results & Analysis](docs/RESULTS.md)** | Fine-tuning, quantization, benchmark table, per-intent slot accuracy breakdown |
+| **[Model Card](docs/MODEL_CARD.md)** | Architecture, training details, limitations, recommendations |
+| Setup guide | `docs/SETUP.md` |
+
+---
 
 ## Dataset
 
-- **Type:** Synthetic — generated locally via Ollama (`llama3.1:8b`)
-- **Intents:** 14 car command intents with structured slot output
-- **Size:** 1,571 utterances (1,252 train / 319 test), stratified 80/20 split
-- **Format:** `Command: <utterance>\nAction: {"intent": "...", "slots": {...}}`
-- **Generation:** Batched (20 examples/call), validated, resume-safe incremental writes
-
-**Examples from the dataset:**
+Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents at three slot-depth tiers.
 
 | Command | Intent | Slots |
 |---------|--------|-------|
@@ -31,110 +92,54 @@ An edge AI pipeline that trains three efficient LLMs on a synthetic car command 
 | `How's the lane assist doing?` | `safety_assist` | `{"feature": "lane_assist", "action": "status"}` |
 | `Switch to sport, please` | `drive_mode` | `{"mode": "sport"}` |
 
-The model is trained to produce the `Action` JSON given the `Command` — intent classification plus structured slot extraction in one pass.
+**1,571 utterances · 14 intents · 1,252 train / 319 test · stratified 80/20 split**
 
-## Architecture
-
-```
-generate_dataset.py  (Ollama llama3.1:8b → 14 intents, 1,571 utterances)
-        Stratified split 80/20 → train.jsonl / test.jsonl
-        │
-        └─► finetune_mlx.py  (MLX-LM LoRA — native Apple Silicon)
-                3 models: Llama-3.2-3B · Qwen-2.5-3B · SmolLM2-1.7B
-                │
-                └─► quantize.py  (MLX-LM)
-                        4-bit + 8-bit per model → 6 quantized variants
-                        │
-                        └─► benchmark.py
-                                9 variants (3 BF16 + 6 quantized): TTFT · TPS · RAM · accuracy
-                                │
-                                └─► comparison.py
-                                        RESULTS.md + MODEL_CARD.md
-                                        │
-                                        └─► demo_cli.py
-                                                text input → quantized LLM
-                                                    → {"intent": "set_climate", "slots": {...}}
-```
-
-## Results
-
-> **[Full results, fine-tuning details, quantization breakdown, and per-intent slot accuracy → docs/RESULTS.md](docs/RESULTS.md)**
->
-> **[Model Card → docs/MODEL_CARD.md](docs/MODEL_CARD.md)**
-
-## Benchmark Results
-
-Evaluated on 319 held-out test examples (317 eval + 2 warmup discarded), stratified 20% split. Intent classification accuracy (14 classes).
-TTFT target: < 200 ms (real-time voice assistant threshold for in-car use). Each variant benchmarked in its own process for accurate RAM measurement.
-
-
-| Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Output tokens ↓ | Power (W) ↓ | Energy/token (mWh) ↓ |
-|---------|----------:|----------:|----:|---------:|---------:|----------:|------------:|----------:|----------:|
-| smollm2-finetuned | 3,268 | 78.6 | 71.4 | 3,612 | 95.9% | **59.6%** | 26.4 | 12.5 | 0.060 |
-| smollm2-4bit | **922** | **54.8** | **199.3** | **1,108** | 95.0% | 53.3% | 26.4 | 16.7 | **0.034** |
-| smollm2-8bit | 1,738 | 64.5 | 120.9 | 1,969 | **96.2%** | 59.0% | 26.5 | 14.8 | 0.046 |
-| qwen-finetuned | 5,897 | 180.4 | 40.0 | 6,385 | 93.1% | 48.3% | 24.4 | 12.2 | 0.112 |
-| qwen-4bit | 1,667 | 136.9 | 123.9 | 1,833 | 92.4% | 48.6% | 23.7 | 14.3 | 0.057 |
-| qwen-8bit | 3,138 | 152.4 | 73.1 | 3,412 | 92.7% | 47.3% | 24.9 | 13.3 | 0.076 |
-| llama-finetuned | 6,144 | 165.5 | 38.8 | 6,662 | 95.9% | 52.7% | 22.0 | **11.5** | 0.108 |
-| llama-4bit | 1,740 | 119.7 | 125.2 | 1,935 | 95.3% | 48.9% | **21.5** | 13.6 | 0.054 |
-| llama-8bit | 3,272 | 133.6 | 70.9 | 3,568 | 95.6% | 51.7% | 21.9 | 13.3 | 0.077 |
-
-**Key insights:**
-- **SmolLM2-8bit is the highest accuracy variant** at 96.2% — while being only 1,738 MB and 64.5 ms TTFT. 8-bit quantization is lossless (or marginally better within noise) for all three models.
-- **SmolLM2-4bit is the strongest edge candidate**: 922 MB, 54.8 ms TTFT, 95.0% accuracy, 0.034 mWh/token — smallest, fastest, most energy-efficient.
-- **All 9 variants pass the 200 ms TTFT target.** SmolLM2 is 54–78 ms; Qwen BF16 is the slowest at 180 ms, still within threshold.
-- **Qwen accuracy is consistently lower** than SmolLM2 and Llama across all variants (92–93% vs 95–96%). SmolLM2 achieves better accuracy at every quantization level despite being the smallest model.
-- **4-bit quantization costs ≤1% accuracy** across all models (SmolLM2: −0.9%, Qwen: −0.7%, Llama: −0.6%) while cutting size by ~72%.
-- **4-bit draws more power (W) but less energy per token** due to higher throughput — smollm2-4bit: 16.7 W → 0.034 mWh/token vs. smollm2-finetuned: 12.5 W → 0.060 mWh/token.
-- **Slot accuracy is 47–60%, well below intent accuracy.** The gap is primarily caused by models generating extra plausible slots not in the ground truth (e.g. adding `"brightness": 100` when the label omits it). Exact-match scoring penalises any extra key, so these numbers understate true extraction quality. SmolLM2-finetuned leads at 59.6%; Qwen is lowest at 47–48%.
-- **Output tokens avg 21–27**: car commands are short — TPS matters less than TTFT for this use case.
-
-
-
-_Hardware: Apple M4 Pro (~273 TOPS Neural Engine). Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM._
+---
 
 ## Quick Start
 
 ```bash
-# Requirements: Python 3.11+, Apple Silicon Mac, Ollama
+# Install dependencies (Python 3.11+, Apple Silicon Mac)
 pip install -r requirements.txt
 
-# Generate synthetic dataset (requires Ollama running with llama3.1:8b)
+# Generate dataset (requires Ollama + llama3.1:8b)
 ollama serve
 python -m src.generate_dataset
 
-# Fine-tune all models with MLX-LM LoRA (requires HF_TOKEN in .env for Llama)
+# Fine-tune all three models (MLX-LM LoRA)
 python -m src.finetune_mlx
 
-# Plot training loss curves
-python -m src.plot_losses
+# Quantize to 4-bit and 8-bit
+python -m src.quantize
 
-# Benchmark all 9 variants sequentially (runs each in its own process for accurate RAM)
+# Benchmark all 9 variants (per-process for accurate RAM)
 bash scripts/run_benchmark.sh
 
-# Run interactive demo (after training + quantization)
+# Run the interactive demo
 python src/demo_cli.py --model smollm2-1.7b-4bit
 ```
+
+> Requires `HF_TOKEN` in `.env` for Llama 3.2 3B (gated model). See `.env.example`.
+
+---
 
 ## Project Structure
 
 ```
 src/
-├── generate_dataset.py  # Ollama dataset generation (14 intents, 1,571 utterances)
-├── dataset.py           # Shared split/save/metadata utilities
-├── finetune_mlx.py      # MLX-LM LoRA fine-tuning (active)
-├── finetune.py          # HF TRL + LoRA fine-tuning (reference / learning)
-├── quantize.py          # MLX 4-bit and 8-bit conversion
-├── benchmark.py         # Latency, TPS, memory, accuracy measurement
-├── plot_losses.py       # Plot train/val loss curves from loss logs
-├── comparison.py        # Generate results table and model card
+├── generate_dataset.py  # Synthetic dataset generation via Ollama
+├── finetune_mlx.py      # MLX-LM LoRA fine-tuning (active pipeline)
+├── finetune.py          # HF TRL + LoRA (reference / learning)
+├── quantize.py          # MLX 4-bit and 8-bit quantization
+├── benchmark.py         # Latency, throughput, memory, accuracy, energy
 ├── demo_cli.py          # Interactive car command demo
 └── utils.py             # Shared config and helpers
+docs/
+├── RESULTS.md           # Full benchmark results and analysis
+├── MODEL_CARD.md        # Model card with training details and limitations
+└── SETUP.md             # Environment setup and reproduction guide
 ```
 
-## Requirements
+---
 
-See `requirements.txt`. Key dependencies: `mlx-lm`, `transformers`, `trl`, `ollama`, `torch`.
-
-Set `HF_TOKEN` in `.env` (required for Llama 3.2 3B — gated model). See `.env.example`.
+_Hardware: Apple M4 Pro (~273 TOPS Neural Engine). Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM._
