@@ -143,3 +143,7 @@ docs/
 ---
 
 _Hardware: Apple M4 Pro (~273 TOPS Neural Engine). Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM._
+
+---
+
+Licensed under the [MIT License](LICENSE).
