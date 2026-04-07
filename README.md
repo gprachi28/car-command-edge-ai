@@ -54,13 +54,13 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
 
 ## Key Results
 
-| Variant | Size (MB) | TTFT (ms) | Intent acc | Energy/token |
-|---------|----------:|----------:|-----------:|-------------:|
-| **smollm2-4bit** | **922** | **54.8** | 95.0% | **0.034 mWh** |
-| smollm2-8bit | 1,738 | 64.5 | **96.2%** | 0.046 mWh |
-| smollm2-finetuned | 3,268 | 78.6 | 95.9% | 0.060 mWh |
-| llama-4bit | 1,740 | 119.7 | 95.3% | 0.054 mWh |
-| qwen-4bit | 1,667 | 136.9 | 92.4% | 0.057 mWh |
+| Variant | Size (MB) | TTFT (ms) | RAM (MB) | Intent acc | Slot acc | Energy/token |
+|---------|----------:|----------:|---------:|-----------:|---------:|-------------:|
+| **smollm2-4bit** | **922** | **54.8** | **1,108** | 95.0% | 53.3% | **0.034 mWh** |
+| smollm2-8bit | 1,738 | 64.5 | 1,969 | **96.2%** | 59.0% | 0.046 mWh |
+| smollm2-finetuned | 3,268 | 78.6 | 3,612 | 95.9% | **59.6%** | 0.060 mWh |
+| llama-4bit | 1,740 | 119.7 | 1,935 | 95.3% | 48.9% | 0.054 mWh |
+| qwen-4bit | 1,667 | 136.9 | 1,833 | 92.4% | 48.6% | 0.057 mWh |
 
 - **SmolLM2-4bit** is the top edge candidate: smallest (922 MB), fastest (54.8 ms TTFT), most energy-efficient (0.034 mWh/token) at 95% accuracy.
 - **4-bit quantization costs ≤1% accuracy** across all models while cutting size by ~72%.
