@@ -1,30 +1,139 @@
-# TODO: Implement interactive CLI demo for car command inference
-#
-# Planned behaviour (see docs/superpowers/specs/ for full spec):
-#
-# Usage:
-#   python src/demo_cli.py --model smollm2-1.7b-4bit
-#
-# On startup:
-#   - Load the specified quantized MLX model from models/quantized/<model>/
-#   - Print model name and peak RAM at load time
-#
-# Interactive loop:
-#   - Prompt user for a car command string
-#   - Run inference through the fine-tuned model
-#   - Parse the JSON output: {"intent": "...", "slots": {...}}
-#   - Display in a readable format:
-#       ✓ Intent: set_climate | Slots: {"mode": "cool", "zone": "front"}
-#   - Handle malformed JSON output gracefully (model failed to produce valid JSON)
-#   - Exit cleanly on Ctrl+C or empty input
-#
-# Supported model keys (matching models/quantized/ directory names):
-#   smollm2-1.7b-finetuned, smollm2-1.7b-4bit, smollm2-1.7b-8bit
-#   qwen-2.5-3b-finetuned,  qwen-2.5-3b-4bit,  qwen-2.5-3b-8bit
-#   llama-3.2-3b-finetuned, llama-3.2-3b-4bit, llama-3.2-3b-8bit
-#
-# Implementation notes:
-#   - Use mlx_lm.load() and mlx_lm.generate() for inference
-#   - Prompt format must match training: "Command: <utterance>\nAction:"
-#   - Cap max_tokens at ~80 (car command outputs are 21-27 tokens on average)
-#   - Measure and display TTFT for each inference
+"""Interactive CLI demo for car command inference.
+
+Loads a fine-tuned or quantized MLX model, then runs an interactive loop
+that maps natural-language car commands to structured intent+slot JSON.
+
+Usage:
+    python src/demo_cli.py --model smollm2-4bit
+
+Exit with Ctrl+C or an empty input line.
+
+Public API:
+    - main() -> None
+"""
+
+import argparse
+import json
+import time
+from pathlib import Path
+
+from mlx_lm import load, stream_generate
+
+from src.utils import build_variants, dir_size_mb, get_logger, get_models_dir
+
+logger = get_logger(__name__)
+
+MAX_TOKENS = 80  # car commands average 21-27 output tokens; 80 is a safe ceiling
+
+
+def _parse_action(text: str) -> dict | None:
+    """Extract the first valid JSON object from generated text.
+
+    Args:
+        text: Raw model output string.
+
+    Returns:
+        Parsed dict or None if no valid JSON object found.
+    """
+    text = text.strip()
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start == -1 or end == 0:
+        return None
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        return None
+
+
+def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
+    """Run one inference pass and return the parsed action, TTFT, and raw output.
+
+    Prompt format matches training: "Command: <utterance>\nAction: "
+
+    Args:
+        model: Loaded MLX model.
+        tokenizer: Loaded tokenizer.
+        utterance: User-supplied car command string.
+
+    Returns:
+        Tuple of (parsed_action dict or None, TTFT in ms, raw generated text).
+    """
+    prompt = f"Command: {utterance}\nAction: "
+    ttft_ms: float | None = None
+    output_tokens: list[str] = []
+
+    t_start = time.perf_counter()
+    for response in stream_generate(model, tokenizer, prompt, max_tokens=MAX_TOKENS):
+        if ttft_ms is None:
+            ttft_ms = (time.perf_counter() - t_start) * 1000
+        output_tokens.append(response.text)
+        if response.finish_reason is not None:
+            break
+
+    raw = "".join(output_tokens)
+    return _parse_action(raw), ttft_ms or 0.0, raw
+
+
+def main() -> None:
+    """Entry point for the interactive CLI demo."""
+    models_dir = get_models_dir()
+    variants = build_variants(models_dir)
+
+    parser = argparse.ArgumentParser(
+        description="Car Command Assistant — maps natural language to structured intent+slots",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Available variants:\n" + "\n".join(
+            f"  {k}" for k in variants
+        ),
+    )
+    parser.add_argument(
+        "--model",
+        choices=list(variants),
+        default="smollm2-4bit",
+        help="Model variant to load (default: smollm2-4bit)",
+    )
+    args = parser.parse_args()
+
+    model_path = variants[args.model]
+    if not model_path.exists():
+        print(f"Error: model not found at {model_path}")
+        print("Run python src/quantize.py first, or check the models/ directory.")
+        return
+
+    size_mb = dir_size_mb(model_path)
+    print(f"\nCar Command Assistant")
+    print(f"Model : {args.model}")
+    print(f"Size  : {size_mb:.0f} MB")
+    print(f"Path  : {model_path}")
+    print("\nLoading model...")
+
+    model, tokenizer = load(str(model_path))
+
+    print("Ready. Type a car command, or press Enter / Ctrl+C to quit.\n")
+
+    while True:
+        try:
+            utterance = input("> ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nGoodbye.")
+            break
+
+        if not utterance:
+            break
+
+        parsed, ttft_ms, raw = _infer(model, tokenizer, utterance)
+
+        if parsed is None:
+            print(f"  [parse error] Raw output: {raw!r}")
+        else:
+            intent = parsed.get("intent", "unknown")
+            slots = parsed.get("slots", {})
+            print(
+                f"  Intent: {intent} | Slots: {json.dumps(slots)}  "
+                f"[TTFT: {ttft_ms:.0f} ms]"
+            )
+
+
+if __name__ == "__main__":
+    main()
