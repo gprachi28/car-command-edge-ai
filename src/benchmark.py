@@ -87,8 +87,8 @@ def _build_variants(models_dir: Path) -> dict[str, Path]:
 # ---------------------------------------------------------------------------
 
 
-def _load_test_examples(processed_dir: Path, n_samples: int) -> list[dict]:
-    """Load n_samples + WARMUP_RUNS examples from test.jsonl.
+def _load_test_examples(processed_dir: Path, n_samples: int | None) -> list[dict]:
+    """Load test examples from test.jsonl, plus WARMUP_RUNS extra for warm-up.
 
     Returns WARMUP_RUNS extra examples so the warmup pool and the evaluation
     pool are non-overlapping. Callers slice accordingly.
@@ -98,10 +98,13 @@ def _load_test_examples(processed_dir: Path, n_samples: int) -> list[dict]:
 
     Args:
         processed_dir: Directory containing test.jsonl.
-        n_samples: Number of evaluation examples (warmup examples are additional).
+        n_samples: Number of evaluation examples (warmup examples are
+            additional). Pass None to load all available examples.
 
     Returns:
-        List of example dicts (length: min(n_samples + WARMUP_RUNS, available)).
+        List of example dicts with length
+        min(n_samples + WARMUP_RUNS, available) when n_samples is given,
+        or all valid examples + WARMUP_RUNS when n_samples is None.
     """
     test_path = processed_dir / "test.jsonl"
     if not test_path.exists():
@@ -124,7 +127,7 @@ def _load_test_examples(processed_dir: Path, n_samples: int) -> list[dict]:
             except json.JSONDecodeError:
                 continue
             examples.append({"prompt": prompt, "ground_truth": ground_truth})
-            if len(examples) >= n_samples + WARMUP_RUNS:
+            if n_samples is not None and len(examples) >= n_samples + WARMUP_RUNS:
                 break
 
     logger.info("Loaded %d test examples", len(examples))
@@ -213,9 +216,13 @@ def _is_correct(predicted: dict | None, ground_truth: dict) -> bool:
 # Power measurement (optional, requires sudo)
 # ---------------------------------------------------------------------------
 
-# Regex to extract GPU and CPU power samples from powermetrics text output.
-_GPU_POWER_RE = re.compile(r"GPU Power:\s+(\d+)\s+mW")
-_CPU_POWER_RE = re.compile(r"CPU Power:\s+(\d+)\s+mW")
+# Match the combined summary line that powermetrics emits once per sample block,
+# after all individual CPU/GPU/ANE lines. Reading this single line gives a
+# correctly paired total without the off-by-one pairing bug that arises when
+# matching CPU Power and GPU Power separately (CPU Power appears before GPU
+# Power in each block, so a per-CPU-line trigger always uses the previous
+# block's GPU value).
+_COMBINED_POWER_RE = re.compile(r"Combined Power \(CPU \+ GPU \+ ANE\):\s+(\d+)\s+mW")
 
 
 @contextmanager
@@ -225,8 +232,9 @@ def _power_monitor(interval_ms: int = 500) -> Generator[list[float], None, None]
     Uses a reader thread to consume powermetrics stdout in real time — avoids the
     pipe-buffer loss that occurs when reading only after process termination.
 
-    Yields a list that is populated live with (gpu_w + cpu_w) readings. On exit,
-    the subprocess is terminated and the reader thread joined.
+    Yields a list that is populated live with combined CPU+GPU+ANE power readings
+    (one per powermetrics sample block). On exit, the subprocess is terminated
+    and the reader thread joined.
 
     Requires sudo. If powermetrics is unavailable or fails to start, yields an
     empty list silently — power columns will be empty in results, no crash.
@@ -242,16 +250,11 @@ def _power_monitor(interval_ms: int = 500) -> Generator[list[float], None, None]
     reader_thread = None
 
     def _reader(pipe) -> None:
-        """Read powermetrics stdout line by line, pairing GPU+CPU per sample block."""
-        gpu_w = 0.0
+        """Read powermetrics stdout, appending one sample per block."""
         for line in pipe:
-            gm = _GPU_POWER_RE.search(line)
-            if gm:
-                gpu_w = float(gm.group(1)) / 1000  # mW → W
-            cm = _CPU_POWER_RE.search(line)
-            if cm:
-                cpu_w = float(cm.group(1)) / 1000
-                samples.append(gpu_w + cpu_w)
+            m = _COMBINED_POWER_RE.search(line)
+            if m:
+                samples.append(float(m.group(1)) / 1000)  # mW → W
 
     try:
         proc = subprocess.Popen(
@@ -294,7 +297,7 @@ def _power_monitor(interval_ms: int = 500) -> Generator[list[float], None, None]
 
 def run_benchmark(
     variant_key: str,
-    n_samples: int = 50,
+    n_samples: int | None = None,
     processed_dir: Path | None = None,
     models_dir: Path | None = None,
     measure_power: bool = False,
@@ -303,7 +306,8 @@ def run_benchmark(
 
     Args:
         variant_key: Key from the variant registry (e.g. "smollm2-4bit").
-        n_samples: Number of test examples to evaluate on.
+        n_samples: Number of test examples to evaluate on. None (default)
+            uses all available examples in test.jsonl.
         processed_dir: Path to processed data dir. Defaults to data/processed/.
         models_dir: Path to models dir. Defaults to models/.
         measure_power: If True, run powermetrics during benchmark to capture GPU+CPU
@@ -416,6 +420,9 @@ def run_benchmark(
             energy_wh = power_w * (bench_duration_s / 3600)
             energy_per_token_mwh = round((energy_wh / total_tokens) * 1000, 3)
 
+    slots_correct_count = sum(1 for p in predictions if p["slots_correct"])
+    slot_accuracy = 100 * slots_correct_count / len(eval_examples)
+
     result = {
         "variant": variant_key,
         "size_mb": round(size_mb),
@@ -423,19 +430,21 @@ def run_benchmark(
         "tps": round(avg_tps, 1),
         "ram_mb": round(avg_ram),
         "accuracy_pct": round(accuracy, 1),
+        "slot_accuracy_pct": round(slot_accuracy, 1),
         "output_tokens_avg": round(avg_output_tokens, 1),
         "power_w": power_w,
         "energy_per_token_mwh": energy_per_token_mwh,
     }
     logger.info(
         "Done: %s | size=%.0fMB TTFT=%.1fms TPS=%.1f RAM=%.0fMB "
-        "acc=%.1f%% tokens_avg=%.1f",
+        "intent_acc=%.1f%% slot_acc=%.1f%% tokens_avg=%.1f",
         variant_key,
         size_mb,
         avg_ttft,
         avg_tps,
         avg_ram,
         accuracy,
+        slot_accuracy,
         avg_output_tokens,
     )
 
@@ -461,7 +470,7 @@ def _null_context() -> Generator[list, None, None]:
 
 
 def benchmark_all(
-    n_samples: int = 50,
+    n_samples: int | None = None,
     processed_dir: Path | None = None,
     models_dir: Path | None = None,
     measure_power: bool = False,
@@ -469,7 +478,8 @@ def benchmark_all(
     """Benchmark all variants and save results to CSV.
 
     Args:
-        n_samples: Number of test examples per variant.
+        n_samples: Number of test examples per variant. None (default)
+            uses all available examples in test.jsonl.
         processed_dir: Path to processed data dir.
         models_dir: Path to models dir.
         measure_power: Enable GPU+CPU power measurement via powermetrics (needs sudo).
@@ -510,6 +520,7 @@ CSV_FIELDS = [
     "tps",
     "ram_mb",
     "accuracy_pct",
+    "slot_accuracy_pct",
     "output_tokens_avg",
     "power_w",
     "energy_per_token_mwh",
@@ -595,17 +606,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Benchmark fine-tuned and quantized models"
     )
+    # Run variants individually to get accurate per-variant RAM readings.
+    # MLX peak_memory is a monotonically increasing high-water mark that never
+    # resets between model loads in a single process — running all variants in
+    # one invocation inflates RAM figures for every model after the first.
+    # Use scripts/run_benchmark.sh to run all 9 variants sequentially.
     parser.add_argument(
         "--variant",
-        choices=[*variants.keys(), "all"],
-        default="all",
-        help="Which variant to benchmark (default: all)",
+        choices=list(variants.keys()),
+        required=True,
+        help="Variant to benchmark. Run scripts/run_benchmark.sh to benchmark all.",
     )
     parser.add_argument(
         "--n-samples",
         type=int,
-        default=50,
-        help="Number of test examples to evaluate on (default: 50)",
+        default=None,
+        help="Number of test examples to evaluate on (default: all)",
     )
     parser.add_argument(
         "--measure-power",
@@ -617,15 +633,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.variant == "all":
-        benchmark_all(n_samples=args.n_samples, measure_power=args.measure_power)
-    else:
-        result = run_benchmark(
-            variant_key=args.variant,
-            n_samples=args.n_samples,
-            measure_power=args.measure_power,
-        )
-        print(json.dumps(result, indent=2))
-        # Append/update this variant in the CSV so spot-checks persist
-        csv_path = get_data_dir() / "results" / "comparison_table.csv"
-        _upsert_csv(result, csv_path)
+    result = run_benchmark(
+        variant_key=args.variant,
+        n_samples=args.n_samples,
+        measure_power=args.measure_power,
+    )
+    print(json.dumps(result, indent=2))
+    # Upsert this variant's row in the CSV so spot-checks persist
+    csv_path = get_data_dir() / "results" / "comparison_table.csv"
+    _upsert_csv(result, csv_path)
