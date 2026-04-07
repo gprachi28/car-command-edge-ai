@@ -1,7 +1,7 @@
 ---
 language:
   - en
-license: apache-2.0
+license: mit
 tags:
   - edge-ai
   - automotive
