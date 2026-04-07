@@ -1,0 +1,87 @@
+[
+  {
+    "iter": 1,
+    "val_loss": 3.105
+  },
+  {
+    "iter": 50,
+    "train_loss": 1.24
+  },
+  {
+    "iter": 100,
+    "train_loss": 1.336
+  },
+  {
+    "iter": 150,
+    "train_loss": 2.322
+  },
+  {
+    "iter": 200,
+    "val_loss": 0.936,
+    "train_loss": 1.069
+  },
+  {
+    "iter": 250,
+    "train_loss": 0.871
+  },
+  {
+    "iter": 300,
+    "train_loss": 0.833
+  },
+  {
+    "iter": 350,
+    "train_loss": 0.682
+  },
+  {
+    "iter": 400,
+    "val_loss": 0.776,
+    "train_loss": 0.617
+  },
+  {
+    "iter": 450,
+    "train_loss": 0.627
+  },
+  {
+    "iter": 500,
+    "train_loss": 0.628
+  },
+  {
+    "iter": 550,
+    "train_loss": 0.647
+  },
+  {
+    "iter": 600,
+    "val_loss": 0.743,
+    "train_loss": 0.637
+  },
+  {
+    "iter": 650,
+    "train_loss": 0.516
+  },
+  {
+    "iter": 700,
+    "train_loss": 0.503
+  },
+  {
+    "iter": 750,
+    "train_loss": 0.494
+  },
+  {
+    "iter": 800,
+    "val_loss": 0.752,
+    "train_loss": 0.523
+  },
+  {
+    "iter": 850,
+    "train_loss": 0.493
+  },
+  {
+    "iter": 900,
+    "train_loss": 0.522
+  },
+  {
+    "iter": 939,
+    "val_loss": 0.727,
+    "train_loss": 0.515
+  }
+]
