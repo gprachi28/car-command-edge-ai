@@ -56,35 +56,11 @@ generate_dataset.py  (Ollama llama3.1:8b → 14 intents, 1,571 utterances)
                                                     → {"intent": "set_climate", "slots": {...}}
 ```
 
-## Status
+## Results
 
-| Phase | Status |
-|-------|--------|
-| Synthetic dataset generation (Ollama llama3.1:8b) | ✅ Complete |
-| MLX-LM LoRA fine-tuning (3 models) | ✅ Complete |
-| MLX quantization (4-bit + 8-bit) | ✅ Complete |
-| Benchmarking (9 variants) | ✅ Complete |
-| Results + model card | Pending |
-
-## Fine-tuning Results
-
-3 epochs, 939 iters, batch 4, grad accumulation 2 (effective batch 8), seed 42. Loss curves saved to `data/results/loss_curves/`.
-
-| Model | Val loss (start → end) | Train loss (final) | Peak RAM | lr | LoRA rank |
-|-------|------------------------|-------------------|----------|----|-----------|
-| SmolLM2 1.7B | 3.018 → 0.647 | 0.392 | 4.2 GB | 2e-4 | 8 |
-| Qwen 2.5 3B | 3.105 → 0.727 | 0.515 | 7.1 GB | 2e-4 | 8 |
-| Llama 3.2 3B | — → 0.690 | 0.428 | 7.6 GB | 2e-5 | 32 |
-
-**Note on Llama training:** With the same hyperparameters as SmolLM2/Qwen (lr=2e-4, LoRA rank=8), Llama produced degenerate output and near-zero accuracy. Dropping to lr=2e-5 with LoRA rank=32 resolved this.
-
-## Quantization Results
-
-| Model | Fine-tuned (BF16) | 4-bit | 8-bit | 4-bit reduction | 8-bit reduction |
-|-------|:-----------------:|:-----:|:-----:|:---------------:|:---------------:|
-| SmolLM2 1.7B | 3,268 MB | 922 MB | 1,738 MB | 71.8% | 46.8% |
-| Qwen 2.5 3B | 5,897 MB | 1,667 MB | 3,138 MB | 71.7% | 46.8% |
-| Llama 3.2 3B | 6,144 MB | 1,740 MB | 3,272 MB | 71.7% | 46.7% |
+> **[Full results, fine-tuning details, quantization breakdown, and per-intent slot accuracy → docs/RESULTS.md](docs/RESULTS.md)**
+>
+> **[Model Card → docs/MODEL_CARD.md](docs/MODEL_CARD.md)**
 
 ## Benchmark Results
 

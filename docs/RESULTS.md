@@ -1,4 +1,4 @@
-# Benchmark Results — Car Command Edge AI
+# Results — Car Command Edge AI
 
 Three fine-tuned LLMs (Llama 3.2 3B, Qwen 2.5 3B, SmolLM2 1.7B) evaluated across 9 variants (BF16 + 4-bit + 8-bit MLX quantization) on a synthetic car command test set.
 
@@ -8,7 +8,42 @@ Three fine-tuned LLMs (Llama 3.2 3B, Qwen 2.5 3B, SmolLM2 1.7B) evaluated across
 
 ---
 
-## Main Benchmark Table
+## Fine-Tuning Results
+
+3 epochs, 939 iterations, batch size 4 with gradient accumulation 2 (effective batch 8), seed 42.
+Loss curves: `data/results/loss_curves/`
+
+| Model | Trainable params | Val loss (start → end) | Train loss (final) | Peak RAM | lr | LoRA rank |
+|-------|:----------------:|:----------------------:|:-----------------:|:--------:|:--:|:---------:|
+| SmolLM2 1.7B | 0.18% (3.0M / 1,711M) | 3.018 → **0.647** | 0.392 | 4.2 GB | 2e-4 | 8 |
+| Qwen 2.5 3B | 0.11% (3.3M / 3,086M) | 3.105 → 0.727 | 0.515 | 7.1 GB | 2e-4 | 8 |
+| Llama 3.2 3B | ~0.4% (rank 32) | — → 0.690 | 0.428 | 7.6 GB | 2e-5 | 32 |
+
+**Key observations:**
+- SmolLM2 converged best — lowest final val loss (0.647) at the smallest parameter count.
+- Qwen converged well (0.727) with comparable training speed.
+- Llama required different hyperparameters: lr=2e-4 / rank=8 (same as SmolLM2/Qwen) caused the model to memorise a degenerate repetitive output with near-zero accuracy. Dropping to lr=2e-5 and raising rank to 32 resolved this.
+
+---
+
+## Quantization Results
+
+All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective precision: ~4.5-bit (4-bit) and ~8.5-bit (8-bit).
+
+| Model | Fine-tuned (BF16) | 4-bit | 8-bit | 4-bit reduction | 8-bit reduction |
+|-------|:-----------------:|:-----:|:-----:|:---------------:|:---------------:|
+| SmolLM2 1.7B | 3,268 MB | 922 MB | 1,738 MB | 71.8% | 46.8% |
+| Qwen 2.5 3B | 5,897 MB | 1,667 MB | 3,138 MB | 71.7% | 46.8% |
+| Llama 3.2 3B | 6,144 MB | 1,740 MB | 3,272 MB | 71.7% | 46.7% |
+
+**Key observations:**
+- Compression ratios are near-identical across all three models — expected for uniform linear quantization.
+- 4-bit Qwen (1,667 MB) is marginally smaller than 4-bit Llama (1,740 MB) despite similar parameter count — likely due to architecture differences in embedding table size.
+- All 6 quantized variants verified loadable before benchmarking.
+
+---
+
+## Benchmark Table
 
 | Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Output tokens | Power (W) | Energy/token (mWh) ↓ |
 |---------|----------:|----------:|----:|---------:|---------:|----------:|-------------:|----------:|-------------------:|
