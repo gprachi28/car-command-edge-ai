@@ -1,3 +1,26 @@
+---
+language:
+  - en
+license: apache-2.0
+tags:
+  - edge-ai
+  - automotive
+  - intent-classification
+  - slot-filling
+  - mlx
+  - lora
+  - quantization
+  - voice-ai
+base_model:
+  - HuggingFaceTB/SmolLM2-1.7B
+  - Qwen/Qwen2.5-3B
+  - meta-llama/Llama-3.2-3B
+pipeline_tag: text-generation
+library_name: mlx-lm
+datasets:
+  - synthetic (generated via Ollama llama3.1:8b)
+---
+
 # Model Card — Car Command Edge AI
 
 **Task:** Natural language → structured intent + slot extraction for in-car voice commands
@@ -172,6 +195,40 @@ bash scripts/run_benchmark.sh
 ```
 
 See `docs/SETUP.md` for full environment setup. Seed: 42. All runs deterministic given the same MLX version.
+
+---
+
+## How to Use
+
+```python
+from mlx_lm import load, generate
+
+model, tokenizer = load("models/quantized/smollm2-1.7b-4bit")
+
+prompt = "Command: Turn off the fan for the rear zone.\nAction:"
+response = generate(model, tokenizer, prompt=prompt, max_tokens=80)
+# {"intent": "set_climate", "slots": {"fan_speed": null, "zone": "rear"}}
+```
+
+Or use the interactive CLI:
+
+```bash
+python src/demo_cli.py --model smollm2-1.7b-4bit
+```
+
+---
+
+## Citation
+
+```bibtex
+@misc{car-command-edge-ai-2026,
+  author       = {Prachi Govalkar},
+  title        = {Car Command Edge AI: Fine-tuning and Quantizing Small LLMs for On-Device Automotive Voice Commands},
+  year         = {2026},
+  howpublished = {\url{https://github.com/gprachi28/car-command-edge-ai}},
+  note         = {Benchmarked on Apple M4 Pro with MLX-LM 0.31+}
+}
+```
 
 ---
 
