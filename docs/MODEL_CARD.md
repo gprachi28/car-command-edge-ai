@@ -147,7 +147,7 @@ See `RESULTS.md` for the full per-intent slot accuracy breakdown and extended an
 ## Recommendations
 
 | Use case | Recommended variant | Rationale |
-|----------|--------------------|-----------| 
+|----------|--------------------|-----------|
 | Tightest memory / lowest latency | `smollm2-4bit` | 922 MB, 54.8 ms TTFT, 95% accuracy, 0.034 mWh/token |
 | Highest accuracy | `smollm2-8bit` | 96.2% intent accuracy, 64.5 ms TTFT, 1,969 MB RAM |
 | BF16 reference baseline | `smollm2-finetuned` | Best slot accuracy (59.6%), no quantization loss |
