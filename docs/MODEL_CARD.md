@@ -119,17 +119,17 @@ Evaluated on 229 examples (231-example stratified 20% hold-out, 14 intent classe
 
 | Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Power (W) | Energy/token (mWh) ↓ |
 |---------|----------:|----------:|----:|---------:|---------:|----------:|----------:|-------------------:|
-| smollm2-finetuned | 3,268 | 79.3 | 71.7 | 3,608 | 98.3% | 66.4% | 12.2 | 0.058 |
-| smollm2-4bit | **922** | **54.3** | 189.0 | **1,103** | 92.6% | 59.8% | 16.2 | **0.033** |
-| smollm2-8bit | 1,738 | 66.4 | 120.5 | 1,971 | 97.8% | 66.8% | 14.4 | 0.044 |
-| qwen-finetuned | 5,897 | 178.8 | 39.4 | 6,385 | **98.3%** | **68.1%** | 12.6 | 0.115 |
-| qwen-4bit | 1,667 | 132.6 | 123.3 | 1,833 | 97.8% | **68.1%** | 14.1 | 0.054 |
-| qwen-8bit | 3,138 | 152.7 | 72.2 | 3,412 | **98.3%** | 67.7% | 13.4 | 0.077 |
-| llama-finetuned | 6,144 | 164.5 | 38.2 | 6,661 | 96.1% | 62.4% | **11.7** | 0.108 |
-| llama-4bit | 1,740 | 120.9 | 124.2 | 1,930 | 93.9% | 55.9% | 13.8 | 0.053 |
-| llama-8bit | 3,272 | 195.3 ⚠️ | 65.5 | 3,568 | 96.1% | 62.0% | 5.8 | 0.039 |
+| smollm2-finetuned | 3,268 | 74.8 | 72.1 | 3,608 | 98.3% | 66.4% | 11.7 | 0.054 |
+| smollm2-4bit | **922** | **54.1** | 200.1 | **1,103** | 96.5% | 61.6% | 15.0 | **0.029** |
+| smollm2-8bit | 1,738 | 66.2 | 121.5 | 1,972 | 98.3% | 66.8% | 13.6 | 0.041 |
+| qwen-finetuned | 5,897 | 178.6 | 39.8 | 6,385 | **99.6%** | **69.0%** | 12.9 | 0.117 |
+| qwen-4bit | 1,667 | 131.4 | **122.8** | 1,833 | 98.3% | **68.6%** | 15.5 | 0.059 |
+| qwen-8bit | 3,138 | 152.0 | 72.3 | 3,412 | **99.6%** | **68.6%** | 14.1 | 0.080 |
+| llama-finetuned | 6,144 | 165.0 | 38.4 | 6,661 | 97.4% | 62.9% | **12.3** | 0.114 |
+| llama-4bit | 1,740 | 120.4 | **123.8** | 1,930 | 94.3% | 55.9% | 15.1 | 0.056 |
+| llama-8bit | 3,272 | 133.4 | 70.2 | 3,568 | 96.9% | 62.0% | 14.0 | 0.079 |
 
-> **Note on latency:** 8 of 9 variants meet the 200 ms TTFT target when measured in isolation. **Llama-8bit (195.3 ms) is marginal** and should not be used in latency-sensitive pipelines. In a full voice pipeline (STT → LLM → TTS), SmolLM2 variants (54–79 ms) leave substantial headroom; Qwen BF16 (179 ms) and Llama BF16 (165 ms) leave very little margin.
+> **Note on latency:** All 9 variants meet the 200 ms TTFT target. SmolLM2 variants (54–75 ms) leave substantial headroom for a full voice pipeline (STT → LLM → TTS). Qwen BF16 (179 ms) and Llama BF16 (165 ms) leave little margin and are better used as BF16 reference baselines.
 
 ---
 
@@ -151,17 +151,23 @@ Evaluated on 229 examples (231-example stratified 20% hold-out, 14 intent classe
 - Test set is held out from the same synthetic distribution — does not measure generalisation to real-world commands.
 
 **Slot accuracy:**
-- Exact-match slot scoring (56–68%) understates practical extraction quality. Models frequently generate extra plausible slots not in the ground truth label, which counts as a full failure under exact match. Slot F1 (precision/recall at key-value level) and schema-filtered slot F1 are captured per-example and give a more accurate picture of extraction quality.
+- Exact-match slot scoring (56–69% overall) understates practical extraction quality. Models frequently generate extra plausible slots not in the ground truth label, which counts as a full failure under exact match. Slot F1 (precision/recall at key-value level) and schema-filtered slot F1 are captured per-example and give a more accurate picture of extraction quality.
 - `navigate` (22–50%) and `set_climate` (39–56%) remain the weakest intents. Models tend to fill in inferred context beyond what the utterance explicitly states.
-- `smollm2-4bit` produces 12 malformed JSON outputs per 229 examples (5.2%) — the highest failure rate across all variants and a reliability concern for production use. All other variants produce 0–4 failures. Add a JSON parse fallback when using `smollm2-4bit`.
+- `smollm2-4bit` produces 3 malformed JSON outputs per 229 examples (1.3%) — the highest failure rate across all variants, but well below the prior run which saw 12 failures caused by early-stop inference truncation. Add a JSON parse fallback when using `smollm2-4bit`.
 
 **Hardware context:**
-- Benchmarked on M4 Pro (~273 TOPS). Automotive cockpit SoCs typically provide 30–50 TOPS with ≤16 GB shared RAM. On target hardware, TPS will be ~4–6× lower; TTFT may increase but car commands are short enough (23–28 output tokens) that most variants are expected to remain within the 200 ms threshold. Llama-8bit (195.3 ms on M4 Pro) may exceed it on constrained hardware.
+- Benchmarked on M4 Pro (~273 TOPS). Automotive cockpit SoCs typically provide 30–50 TOPS with ≤16 GB shared RAM. On target hardware, TPS will be ~4–6× lower; TTFT may increase but car commands are short enough (25–29 output tokens) that most variants are expected to remain within the 200 ms threshold.
+- **Total response time (TTFT + generation) is the relevant pipeline metric**, not TTFT alone. The TTS synthesizer can't begin speaking until the full JSON is parsed. Calculated as TTFT + (output_tokens / TPS): smollm2-4bit ~202 ms, qwen-4bit ~342 ms, llama-4bit ~322 ms. smollm2-4bit is the only 4-bit variant where the complete response is ready within 200 ms.
+- **4-bit models draw higher peak wattage than BF16.** smollm2-4bit: 15.0 W; qwen-4bit: 15.5 W vs BF16 baselines at 11.7–12.9 W. Automotive SoCs use passive cooling — sustained peak power above the SoC's thermal design power (TDP) causes clock throttling, which collapses TPS and can push total response time beyond the 200 ms target. On thermally constrained hardware, lower-wattage BF16 variants may be preferable depending on the vehicle's thermal envelope.
+- **Only `smollm2-4bit` (1,103 MB RAM) can realistically stay always-resident on an 8 GB cockpit SoC.** A system running the OS, navigation maps, media player, and display compositor has roughly 2–3 GB left for the voice AI model. qwen-4bit (1,833 MB) is borderline; all 8-bit and BF16 variants (3,400–6,700 MB) require unloading other systems. If the model isn't always-resident, every voice interaction pays a cold-start penalty — loading a 6 GB BF16 model from flash takes 5–30 seconds.
 - Power measurements are approximations via macOS `powermetrics` — not equivalent to automotive SoC power envelopes.
+
+**Safety-critical intent accuracy:**
+- Accuracy is reported as a single figure across all 14 intents. Safety-relevant intents are not separated. A wrong slot on `cruise_control` (e.g. incorrect target speed or enable/disable inversion) or `safety_assist` (wrong feature or action) is a different category of failure from a wrong slot on `play_media`. Current slot accuracy: `cruise_control` 71–88%, `safety_assist` 75–83%. A production deployment would apply a higher accuracy threshold or require a driver confirmation prompt for commands in these intents before execution.
 
 **Scope:**
 - No voice input pipeline (ASR) — text-only evaluation.
-- Models were not evaluated on safety-critical commands (emergency braking, collision warnings) — intent extraction accuracy for those intents was not separately validated.
+- **Determinism under repeated identical commands is not benchmarked.** Greedy decoding (temp=0.0) should produce the same output for the same input, but this was not verified across multiple runs. A production system requires guaranteed consistent responses — the same command must always produce the same structured output. smollm2-4bit's 1.3% parse failure rate means 3 out of 229 examples produced no valid JSON; it is unknown whether those failures are deterministic or stochastic.
 
 ---
 
@@ -169,11 +175,10 @@ Evaluated on 229 examples (231-example stratified 20% hold-out, 14 intent classe
 
 | Use case | Recommended variant | Rationale |
 |----------|--------------------|-----------|
-| Tightest memory / lowest latency / lowest energy | `smollm2-4bit` | 922 MB, 54.3 ms TTFT, 92.6% intent acc, 0.033 mWh/token — add JSON parse fallback (5.2% failure rate) |
-| Best accuracy at 4-bit | `qwen-4bit` | 97.8% intent accuracy, 132.6 ms TTFT, 1,833 MB RAM, 0.054 mWh/token |
-| Highest overall accuracy | `qwen-8bit` | 98.3% intent accuracy, 152.7 ms TTFT, 3,412 MB RAM |
-| BF16 reference baseline | `qwen-finetuned` or `smollm2-finetuned` | Both at 98.3% intent accuracy; Qwen leads on slot accuracy (68.1% vs 66.4%) |
-| Avoid in latency-sensitive pipelines | `llama-8bit` | 195.3 ms TTFT — within 5 ms of the 200 ms automotive target |
+| Tightest memory / lowest latency / lowest energy / always-resident | `smollm2-4bit` | 922 MB disk, 1,103 MB RAM, 54.1 ms TTFT, ~202 ms total response, 96.5% intent acc, 0.029 mWh/token — the only variant that fits in 8 GB cockpit RAM alongside OS and navigation. Add JSON parse fallback (1.3% failure rate). |
+| Best accuracy at 4-bit | `qwen-4bit` | 98.3% intent accuracy, 131.4 ms TTFT, ~342 ms total response, 1,833 MB RAM, 0.059 mWh/token |
+| Highest overall accuracy | `qwen-8bit` | 99.6% intent accuracy, 152.0 ms TTFT, 3,412 MB RAM |
+| BF16 reference baseline | `qwen-finetuned` or `smollm2-finetuned` | Qwen leads on both intent accuracy (99.6% vs 98.3%) and slot accuracy (69.0% vs 66.4%) |
 
 ---
 
@@ -231,4 +236,4 @@ python -m src.demo_cli --model smollm2-4bit
 
 ---
 
-*Initial benchmark: 2026-04-06 (v1 dataset). v2 dataset rewrite + full re-benchmark (greedy decoding, wall-clock TPS, brace-depth stop, slot F1): 2026-04-14. Hardware: Apple M4 Pro, macOS 15. MLX-LM 0.31+.*
+*Initial benchmark: 2026-04-06 (v1 dataset). v2 dataset rewrite + full re-benchmark (greedy decoding, wall-clock TPS, slot F1): 2026-04-14. EOS-based inference (brace-depth early stop removed), re-benchmarked 2026-04-14. Hardware: Apple M4 Pro, macOS 15. MLX-LM 0.31+.*

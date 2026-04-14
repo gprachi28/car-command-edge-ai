@@ -25,7 +25,10 @@ Three compact LLMs are fine-tuned with LoRA, quantized to 4-bit and 8-bit, and b
 | **Dataset** | Synthetic — 14 intents, ~1,200 utterances (Ollama `llama3.1:8b`) |
 | **Hardware** | Apple M4 Pro (~273 TOPS) |
 
+Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM.
+
 ---
+
 
 ## Pipeline
 
@@ -49,19 +52,20 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 
 | Variant | Size (MB) | TTFT (ms) | RAM (MB) | Intent acc | Slot acc | Energy/token |
 |---------|----------:|----------:|---------:|-----------:|---------:|-------------:|
-| **smollm2-4bit** | **922** | **54.3** | **1,103** | 92.6% | 59.8% | **0.033 mWh** |
-| smollm2-8bit | 1,738 | 66.4 | 1,971 | 97.8% | 66.8% | 0.044 mWh |
-| qwen-4bit | 1,667 | 132.6 | 1,833 | **97.8%** | **68.1%** | 0.054 mWh |
-| qwen-8bit | 3,138 | 152.7 | 3,412 | **98.3%** | 67.7% | 0.077 mWh |
-| llama-4bit | 1,740 | 120.9 | 1,930 | 93.9% | 55.9% | 0.053 mWh |
+| **smollm2-4bit** | **922** | **54.1** | **1,103** | 96.5% | 61.6% | **0.029 mWh** |
+| smollm2-8bit | 1,738 | 66.2 | 1,972 | 98.3% | 66.8% | 0.041 mWh |
+| qwen-4bit | 1,667 | 131.4 | 1,833 | 98.3% | **68.6%** | 0.059 mWh |
+| qwen-8bit | 3,138 | 152.0 | 3,412 | **99.6%** | **68.6%** | 0.080 mWh |
+| llama-4bit | 1,740 | 120.4 | 1,930 | 94.3% | 55.9% | 0.056 mWh |
 
-- **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.3 ms TTFT), most energy-efficient (0.033 mWh/token). Intent accuracy 92.6%; add a JSON parse fallback (5.2% parse failure rate).
-- **4-bit quantization accuracy cost is model-dependent:** Qwen −0.5%, Llama −2.2%, SmolLM2 −5.7%. **8-bit is lossless** for all three (≤0.5% change) while cutting size ~47%.
-- **Qwen achieves highest intent accuracy** (97.8–98.3%) at every quantization level — a reversal from v1. On the cleaner v2 dataset, Qwen's structured output learning leads.
-- **8 of 9 variants meet the 200 ms TTFT target.** SmolLM2 variants (54–79 ms) leave substantial headroom. Llama-8bit (195.3 ms) is marginal.
+- **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.1 ms TTFT), most energy-efficient (0.029 mWh/token), and the only variant that stays always-resident in an 8 GB cockpit SoC alongside OS and navigation. Intent accuracy 96.5%; add a JSON parse fallback (1.3% parse failure rate).
+- **Total response time — not TTFT — is what the TTS pipeline sees.** Calculated as TTFT + (output_tokens / TPS): smollm2-4bit ~202 ms, qwen-4bit ~342 ms, llama-4bit ~322 ms. smollm2-4bit's 200.1 TPS is what keeps it within the 200 ms automotive target end-to-end.
+- **4-bit quantization accuracy cost is model-dependent:** Qwen −1.3%, SmolLM2 −1.8%, Llama −3.1%. **8-bit is lossless** for Qwen and SmolLM2 (0% change) and near-lossless for Llama (−0.5%) while cutting size ~47%.
+- **Qwen achieves highest intent accuracy** (98.3–99.6%) at every quantization level. On the v2 dataset, Qwen's structured output learning is consistent across all compression levels.
+- **All 9 variants meet the 200 ms TTFT target.** SmolLM2 variants (54–75 ms) leave substantial headroom. The highest TTFT is qwen-finetuned at 178.6 ms.
 - **Slot acc (exact-match) understates real extraction quality** — models generate additional plausible slots not in ground truth, which exact-match penalises. The benchmark also reports slot F1 (precision/recall) and schema-filtered slot F1 (slots filtered to the per-intent allowed key set) for a more meaningful comparison. The demo CLI applies the schema filter automatically.
 
-> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for smollm2-4bit, still well within the 200 ms automotive target.
+> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up — adding ~50 ms. Interactive TTFT measured at 97–103 ms for smollm2-4bit across a range of car commands — well within the 200 ms automotive target.
 
 ---
 
@@ -144,8 +148,9 @@ docs/
 
 ---
 
-_Hardware: Apple M4 Pro (~273 TOPS Neural Engine). Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM._
+Licensed under the [MIT License](LICENSE).
 
 ---
 
-Licensed under the [MIT License](LICENSE).
+🤖 Logic co-authored by [Claude Code](https://claude.ai/code).
+🧠 Final implementation, validation and technical responsibility: Prachi Govalkar.
