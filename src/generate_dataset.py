@@ -777,9 +777,9 @@ def _call_ollama(model: str, prompt: str) -> list[dict]:
         if isinstance(data, list):
             return data
         if isinstance(data, dict):
-            for v in data.values():
-                if isinstance(v, list):
-                    return v
+            examples = data.get("examples")
+            if isinstance(examples, list):
+                return examples
         return []
     except Exception as e:
         logger.error("Ollama call failed: %s", e)
