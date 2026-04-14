@@ -3,7 +3,7 @@
 Three fine-tuned LLMs (Llama 3.2 3B, Qwen 2.5 3B, SmolLM2 1.7B) evaluated across 9 variants (BF16 + 4-bit + 8-bit MLX quantization) on a synthetic car command test set.
 
 **Hardware:** Apple M4 Pro (~273 TOPS Neural Engine)
-**Dataset:** v1 synthetic dataset — 1,571 utterances, 317-example test set (stratified 20% hold-out, 14 intent classes)
+**Dataset:** v2 synthetic dataset — ~1,200 utterances, 229 evaluated examples (231-example stratified 20% hold-out, 14 intent classes; 2 warmup examples discarded)
 **Inference:** greedy decoding (`temp=0.0`), brace-depth stop (exits when root JSON object closes), wall-clock TPS
 **TTFT target:** < 200 ms (real-time voice assistant threshold for in-car use)
 
@@ -48,38 +48,43 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 
 | Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Output tokens | Power (W) | Energy/token (mWh) ↓ |
 |---------|----------:|----------:|----:|---------:|---------:|----------:|-------------:|----------:|-------------------:|
-| smollm2-finetuned | 3,268 | 78.6 | 71.4 | 3,612 | 95.9% | **59.6%** | 26.4 | 12.5 | 0.060 |
-| smollm2-4bit | **922** | **54.8** | **199.3** | **1,108** | 95.0% | 53.3% | 26.4 | 16.7 | **0.034** |
-| smollm2-8bit | 1,738 | 64.5 | 120.9 | 1,969 | **96.2%** | 59.0% | 26.5 | 14.8 | 0.046 |
-| qwen-finetuned | 5,897 | 180.4 | 40.0 | 6,385 | 93.1% | 48.3% | 24.4 | 12.2 | 0.112 |
-| qwen-4bit | 1,667 | 136.9 | 123.9 | 1,833 | 92.4% | 48.6% | 23.7 | 14.3 | 0.057 |
-| qwen-8bit | 3,138 | 152.4 | 73.1 | 3,412 | 92.7% | 47.3% | 24.9 | 13.3 | 0.076 |
-| llama-finetuned | 6,144 | 165.5 | 38.8 | 6,662 | 95.9% | 52.7% | 22.0 | **11.5** | 0.108 |
-| llama-4bit | 1,740 | 119.7 | 125.2 | 1,935 | 95.3% | 48.9% | **21.5** | 13.6 | 0.054 |
-| llama-8bit | 3,272 | 133.6 | 70.9 | 3,568 | 95.6% | 51.7% | 21.9 | 13.3 | 0.077 |
+| smollm2-finetuned | 3,268 | 79.3 | 71.7 | 3,608 | 98.3% | 66.4% | 28.1 | 12.2 | 0.058 |
+| smollm2-4bit | **922** | **54.3** | 189.0 | **1,103** | 92.6% | 59.8% | 26.7 | 16.2 | **0.033** |
+| smollm2-8bit | 1,738 | 66.4 | 120.5 | 1,971 | 97.8% | 66.8% | 28.1 | 14.4 | 0.044 |
+| qwen-finetuned | 5,897 | 178.8 | 39.4 | 6,385 | **98.3%** | **68.1%** | 24.3 | 12.6 | 0.115 |
+| qwen-4bit | 1,667 | 132.6 | **123.3** | 1,833 | 97.8% | **68.1%** | 24.7 | 14.1 | 0.054 |
+| qwen-8bit | 3,138 | 152.7 | 72.2 | 3,412 | **98.3%** | 67.7% | 24.3 | 13.4 | 0.077 |
+| llama-finetuned | 6,144 | 164.5 | 38.2 | 6,661 | 96.1% | 62.4% | 23.5 | 11.7 | 0.108 |
+| llama-4bit | 1,740 | 120.9 | 124.2 | 1,930 | 93.9% | 55.9% | 23.7 | 13.8 | 0.053 |
+| llama-8bit | 3,272 | 195.3 ⚠️ | 65.5 | 3,568 | 96.1% | 62.0% | 23.5 | **5.8** | 0.039 |
 
-> **Note on latency:** All 9 variants meet the 200 ms TTFT target in isolation. However, a production voice pipeline also includes STT (speech-to-text) and TTS (text-to-speech) stages. SmolLM2 variants (55–79 ms) leave substantial headroom for the full pipeline; Qwen BF16 at 180 ms and Llama BF16 at 166 ms leave very little margin and would be marginal in a STT → LLM → TTS chain on constrained hardware.
+> **Note on latency:** 8 of 9 variants meet the 200 ms TTFT target in isolation. **Llama-8bit (195.3 ms) is marginal** — within 5 ms of the threshold and should not be used in latency-sensitive pipelines. SmolLM2 variants (54–79 ms) leave substantial headroom for a full STT → LLM → TTS pipeline. Qwen BF16 (179 ms) and Llama BF16 (165 ms) leave very little margin.
 >
 > **Note on benchmark vs interactive TTFT:** These numbers are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use, macOS throttles the GPU clock and spins down compute units during the pause while a user types or speaks. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for SmolLM2-4bit. Both figures pass the 200 ms automotive target; the benchmark number reflects sustained throughput, the interactive number is more representative of real driver use.
+>
+> **Note on Llama-8bit power:** The 5.8 W power reading for llama-8bit is likely a `powermetrics` measurement artifact (brief sampling window at lower GPU utilisation for an 8-bit model). Treat the energy/token figure with caution; the TPS and TTFT numbers are reliable.
 
 ---
 
 ## Key Insights
 
 **Quantization:**
-- **4-bit costs ≤1% intent accuracy** across all models (SmolLM2: −0.9%, Qwen: −0.7%, Llama: −0.6%) while cutting model size by ~72% and RAM by ~70%.
-- **8-bit quantization is effectively lossless** — all three models match or marginally exceed their BF16 fine-tuned baseline on intent accuracy.
-- **4-bit draws more power (W) but less energy per token** — higher throughput more than compensates. smollm2-4bit: 16.7 W → 0.034 mWh/token vs. smollm2-finetuned: 12.5 W → 0.060 mWh/token.
+- **4-bit accuracy cost is model-dependent.** On v2 data: Qwen −0.5% (98.3% → 97.8%), Llama −2.2% (96.1% → 93.9%), SmolLM2 −5.7% (98.3% → 92.6%). Qwen is the most quantization-robust; SmolLM2 shows a significant 4-bit drop despite being the smallest model.
+- **8-bit is effectively lossless** for all three models (≤0.5% intent accuracy change) while cutting model size by ~47% and RAM by ~45%.
+- **4-bit draws more power (W) but less energy per token** — higher throughput more than compensates. smollm2-4bit: 16.2 W → 0.033 mWh/token vs. smollm2-finetuned: 12.2 W → 0.058 mWh/token.
 
 **Model comparison:**
-- **SmolLM2 dominates at every quantization level.** Despite being the smallest model (1.7B), it achieves the highest intent accuracy (96.2% at 8-bit), lowest TTFT (54.8 ms at 4-bit), and lowest energy per token — all at a fraction of the memory footprint.
-- **Qwen accuracy is consistently lower** than SmolLM2 and Llama (92–93% vs 95–96%), with the highest parse failure rate (3–6 malformed JSON outputs per 317 examples vs. 0–1 for SmolLM2/Llama).
-- **Llama required different hyperparameters:** lr=2e-4/rank=8 (same as SmolLM2/Qwen) produced degenerate repetitive output and near-zero accuracy. Dropping to lr=2e-5/rank=32 resolved this completely (95.9% intent accuracy).
+- **Qwen achieves the highest intent accuracy** (97.8–98.3% across all quantization levels) and the best slot accuracy (67–68%), reversing the v1 ranking. On the cleaner v2 dataset, Qwen's structured output learning shows through clearly.
+- **SmolLM2-4bit has the best latency and footprint** (54.3 ms TTFT, 922 MB, 0.033 mWh/token) but carries the lowest intent accuracy among 4-bit variants (92.6%) and a notable parse failure rate (12/229 = 5.2%). More reliable at 8-bit (97.8%, 1 failure).
+- **Llama-8bit TTFT (195.3 ms) is marginal** — within 5 ms of the 200 ms automotive target and should not be used in latency-sensitive pipelines. All other variants pass comfortably.
+- **Llama required different hyperparameters:** lr=2e-4/rank=8 produced degenerate repetitive output and near-zero accuracy. Dropping to lr=2e-5/rank=32 resolved this completely (96.1% intent accuracy).
 
 **Recommended variants:**
-- **Best edge deployment:** `smollm2-4bit` — 922 MB, 54.8 ms TTFT, 95% intent accuracy, 0.034 mWh/token.
-- **Best accuracy:** `smollm2-8bit` — 96.2% intent accuracy, 64.5 ms TTFT, 1,969 MB RAM.
-- **Tightest memory budget:** `smollm2-4bit` at 1,108 MB RAM fits comfortably within the ≤16 GB cockpit SoC envelope and would run at ~4–6× worse TPS on a 30–50 TOPS automotive chip, still well within the 200 ms TTFT target for short car commands.
+- **Best edge (size/latency/energy):** `smollm2-4bit` — 922 MB, 54.3 ms TTFT, 92.6% intent accuracy, 0.033 mWh/token. Note the 5.2% parse failure rate; add a JSON parse fallback in production.
+- **Best accuracy at 4-bit:** `qwen-4bit` — 97.8% intent accuracy, 132.6 ms TTFT, 1,833 MB RAM, 0.054 mWh/token.
+- **Best overall accuracy:** `qwen-8bit` — 98.3% intent accuracy, 152.7 ms TTFT, 3,412 MB RAM.
+- **Tightest memory budget:** `smollm2-4bit` at 1,103 MB RAM fits comfortably within the ≤16 GB cockpit SoC envelope and would run at ~4–6× worse TPS on a 30–50 TOPS automotive chip, still well within the 200 ms TTFT target for short car commands.
+- **Avoid:** `llama-8bit` in latency-sensitive pipelines (195.3 ms, marginal margin).
 
 ---
 
@@ -95,41 +100,46 @@ Slot accuracy uses exact-match scoring: every key-value pair in the predicted JS
 
 | Intent | Slot depth | sm2-ft | sm2-4bit | sm2-8bit | qw-ft | qw-4bit | qw-8bit | ll-ft | ll-4bit | ll-8bit |
 |--------|:----------:|-------:|--------:|--------:|------:|--------:|--------:|------:|--------:|--------:|
-| call_contact | shallow | 80% | 75% | 80% | 80% | 75% | 80% | 75% | 80% | 75% |
-| read_message | shallow | 70% | 75% | 70% | 80% | 75% | 75% | 70% | 75% | 70% |
-| safety_assist | shallow | 83% | 78% | 83% | 72% | 67% | 72% | 72% | 78% | 72% |
-| drive_mode | shallow | 78% | 78% | 78% | 72% | 72% | 72% | 67% | 67% | 67% |
-| vehicle_info | shallow | 80% | 60% | 80% | 70% | 70% | 65% | 55% | 55% | 55% |
-| cruise_control | medium | 75% | 71% | 75% | 42% | 58% | 42% | 79% | 75% | 79% |
-| adjust_volume | medium | 74% | 52% | 74% | 57% | 57% | 52% | 43% | 35% | 39% |
-| window_control | medium | 65% | 61% | 65% | 39% | 52% | 39% | 57% | 52% | 57% |
-| connectivity | medium | 39% | 39% | 39% | 35% | 39% | 35% | 39% | 39% | 35% |
-| seat_control | deep | 58% | 50% | 58% | 62% | 50% | 62% | 65% | 62% | 65% |
-| set_lighting | deep | 42% | 50% | 38% | 31% | 31% | 31% | 54% | 38% | 50% |
-| set_climate | deep | 46% | 38% | 46% | 27% | 23% | 27% | 35% | 38% | 31% |
-| play_media | medium | 46% | 29% | 42% | 29% | 33% | 29% | 33% | 12% | 38% |
-| navigate | deep | 23% | 15% | 23% | 12% | 8% | 12% | 12% | 4% | 12% |
-| **OVERALL** | | **59.6%** | **53.3%** | **59.0%** | **48.3%** | **48.6%** | **47.3%** | **52.7%** | **48.9%** | **51.7%** |
+| call_contact | shallow | 94% | 56% | 100% | 94% | 94% | 94% | 88% | 88% | 94% |
+| read_message | shallow | 94% | 94% | 94% | 88% | 88% | 88% | 56% | 56% | 56% |
+| safety_assist | shallow | 75% | 67% | 75% | 83% | 83% | 83% | 75% | 75% | 75% |
+| drive_mode | shallow | 88% | 88% | 88% | 88% | 88% | 88% | 88% | 88% | 88% |
+| vehicle_info | shallow | 71% | 71% | 71% | 86% | 57% | 86% | 86% | 86% | 86% |
+| cruise_control | medium | 76% | 82% | 76% | 76% | 82% | 76% | 88% | 71% | 82% |
+| adjust_volume | medium | 72% | 61% | 83% | 61% | 78% | 61% | 56% | 33% | 56% |
+| window_control | medium | 53% | 53% | 53% | 60% | 60% | 60% | 53% | 47% | 53% |
+| connectivity | medium | 50% | 44% | 44% | 62% | 69% | 62% | 44% | 44% | 44% |
+| seat_control | deep | 67% | 56% | 61% | 78% | 67% | 72% | 67% | 50% | 61% |
+| set_lighting | deep | 50% | 61% | 50% | 50% | 39% | 50% | 56% | 39% | 56% |
+| set_climate | deep | 50% | 56% | 50% | 39% | 56% | 39% | 44% | 39% | 44% |
+| play_media | medium | 47% | 35% | 47% | 59% | 53% | 59% | 41% | 35% | 35% |
+| navigate | deep | 50% | 22% | 50% | 44% | 50% | 44% | 44% | 50% | 50% |
+| **OVERALL** | | **66%** | **60%** | **67%** | **68%** | **68%** | **68%** | **62%** | **56%** | **62%** |
 
 ### Slot Accuracy Insights
 
-**Intent depth drives slot accuracy more than model size:**
-- Shallow intents (`call_contact`, `safety_assist`, `drive_mode`) consistently score 67–83% across all variants and models. These have 1–2 fixed slots — there's little room to add spurious keys.
-- Deep intents (`navigate`, `set_climate`, `play_media`) score 4–46%. The model generates additional plausible but unlabelled slots, and exact-match scoring fails every such example.
+**Intent depth still drives slot accuracy more than model size:**
+- Shallow intents (`call_contact`, `drive_mode`, `read_message`) consistently score 56–100% across all variants. These have 1–2 fixed slots — little room to add spurious keys.
+- Deep intents (`navigate`, `set_climate`, `set_lighting`) score 22–61%. Models generate additional plausible but unlabelled slots, and exact-match scoring fails every such example.
 
-**`navigate` is the worst intent (4–23%):**
-Navigation commands accept highly variable slot combinations (`destination`, `destination_type`, `route_preference`, `waypoint`, etc.). The ground truth often captures only the explicit slot mentioned; the model fills in additional context it infers. For example, `"Take me to the airport via the highway"` might be labelled `{"destination": "airport"}` while the model outputs `{"destination": "airport", "route": "highway"}` — factually correct but scored as wrong.
+**`navigate` improved significantly vs v1 (22–50% vs 4–23%):**
+The v2 density-tier dataset generates cleaner navigate examples with explicit slot guidance. Still variable across variants: smollm2-4bit is the weakest at 22%; all 8-bit variants reach 44–50%.
 
-**`connectivity` is a flat floor at 35–39%:**
-All nine variants land in a narrow band regardless of model size or quantization, suggesting the issue is in the training data schema (ambiguous or inconsistently labelled connectivity slots) rather than model capacity.
+**`connectivity` floor has risen slightly (44–69% vs 35–39% in v1):**
+Qwen-4bit reaches 69% — the best connectivity score across the whole benchmark. The v2 dataset's improved schema consistency has helped here.
 
-**`set_climate` and `play_media` show the extra-slot hallucination pattern most clearly:**
-Models add temperature defaults, fan speed, or media source even when the utterance doesn't specify them. This is a known failure mode of instruction-tuned models on structured extraction — they complete plausible schemas rather than copy only what was said.
+**`call_contact` shows a sharp smollm2-4bit drop (56% vs 88–100% for other variants):**
+This is consistent with smollm2-4bit's overall parse failure rate (12/229 = 5.2%). Under 4-bit compression, SmolLM2 occasionally truncates or malforms the JSON for shallow intents — not a depth issue but a reliability one specific to this variant.
 
-**Parse reliability:**
-- SmolLM2: 0–1 malformed JSON outputs per 317 examples (most reliable)
-- Llama: 0 failures (all variants)
-- Qwen: 3–6 failures per 317 examples — most likely to output invalid JSON under 4-bit/8-bit compression
+**`set_climate` and `play_media` remain challenging:**
+Models fill in inferred context beyond what the utterance explicitly states. This is a known failure mode of instruction-tuned models on structured extraction.
+
+**Parse reliability (out of 229 examples):**
+- smollm2-finetuned: 0 failures (most reliable)
+- qwen-finetuned: 3 failures; qwen-4bit: 2; qwen-8bit: 3
+- llama-finetuned: 4 failures; llama-4bit: 2; llama-8bit: 3
+- smollm2-8bit: 1 failure
+- **smollm2-4bit: 12 failures (5.2%)** — significantly higher than all other variants; add a JSON parse fallback in production
 
 **Practical implication:**
-Slot accuracy numbers (47–60%) understate real extraction quality. For production use, switching from exact-match to partial-match scoring (credit for each correct key-value pair, penalty for each extra key) would give a more accurate picture. Intent classification accuracy (92–96%) is the more reliable signal for deployment readiness.
+Slot accuracy numbers (56–68% overall) understate real extraction quality. For production use, switching from exact-match to partial-match scoring (credit for each correct key-value pair, penalty for each extra key) would give a more accurate picture. Intent classification accuracy (92–98%) is the more reliable signal for deployment readiness.

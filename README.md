@@ -49,19 +49,19 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 
 | Variant | Size (MB) | TTFT (ms) | RAM (MB) | Intent acc | Slot acc | Energy/token |
 |---------|----------:|----------:|---------:|-----------:|---------:|-------------:|
-| **smollm2-4bit** | **922** | **54.8** | **1,108** | 95.0% | 53.3% | **0.034 mWh** |
-| smollm2-8bit | 1,738 | 64.5 | 1,969 | **96.2%** | 59.0% | 0.046 mWh |
-| smollm2-finetuned | 3,268 | 78.6 | 3,612 | 95.9% | **59.6%** | 0.060 mWh |
-| llama-4bit | 1,740 | 119.7 | 1,935 | 95.3% | 48.9% | 0.054 mWh |
-| qwen-4bit | 1,667 | 136.9 | 1,833 | 92.4% | 48.6% | 0.057 mWh |
+| **smollm2-4bit** | **922** | **54.3** | **1,103** | 92.6% | 59.8% | **0.033 mWh** |
+| smollm2-8bit | 1,738 | 66.4 | 1,971 | 97.8% | 66.8% | 0.044 mWh |
+| qwen-4bit | 1,667 | 132.6 | 1,833 | **97.8%** | **68.1%** | 0.054 mWh |
+| qwen-8bit | 3,138 | 152.7 | 3,412 | **98.3%** | 67.7% | 0.077 mWh |
+| llama-4bit | 1,740 | 120.9 | 1,930 | 93.9% | 55.9% | 0.053 mWh |
 
-- **SmolLM2-4bit** is the top edge candidate: smallest (922 MB), fastest (54.8 ms TTFT), most energy-efficient (0.034 mWh/token) at 95% accuracy.
-- **4-bit quantization costs ≤1% accuracy** across all models while cutting size by ~72%.
-- **All 9 variants meet the 200 ms TTFT target** in isolation. SmolLM2 variants (55–79 ms) leave substantial headroom for a full STT → LLM → TTS pipeline; Qwen BF16 (180 ms) and Llama BF16 (166 ms) leave little margin.
-- **SmolLM2 beats both larger models** on intent accuracy at every quantization level, despite being the smallest.
+- **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.3 ms TTFT), most energy-efficient (0.033 mWh/token). Intent accuracy 92.6%; add a JSON parse fallback (5.2% parse failure rate).
+- **4-bit quantization accuracy cost is model-dependent:** Qwen −0.5%, Llama −2.2%, SmolLM2 −5.7%. **8-bit is lossless** for all three (≤0.5% change) while cutting size ~47%.
+- **Qwen achieves highest intent accuracy** (97.8–98.3%) at every quantization level — a reversal from v1. On the cleaner v2 dataset, Qwen's structured output learning leads.
+- **8 of 9 variants meet the 200 ms TTFT target.** SmolLM2 variants (54–79 ms) leave substantial headroom. Llama-8bit (195.3 ms) is marginal.
 - **Slot acc (exact-match) understates real extraction quality** — models generate additional plausible slots not in ground truth, which exact-match penalises. The benchmark also reports slot F1 (precision/recall) and schema-filtered slot F1 (slots filtered to the per-intent allowed key set) for a more meaningful comparison. The demo CLI applies the schema filter automatically.
 
-> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for SmolLM2-4bit, still well within the 200 ms automotive target.
+> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for smollm2-4bit, still well within the 200 ms automotive target.
 
 ---
 
