@@ -3,7 +3,8 @@
 Three fine-tuned LLMs (Llama 3.2 3B, Qwen 2.5 3B, SmolLM2 1.7B) evaluated across 9 variants (BF16 + 4-bit + 8-bit MLX quantization) on a synthetic car command test set.
 
 **Hardware:** Apple M4 Pro (~273 TOPS Neural Engine)
-**Test set:** 317 examples, stratified 20% hold-out (14 intent classes)
+**Dataset:** v1 synthetic dataset — 1,571 utterances, 317-example test set (stratified 20% hold-out, 14 intent classes)
+**Inference:** greedy decoding (`temp=0.0`), brace-depth stop (exits when root JSON object closes), wall-clock TPS
 **TTFT target:** < 200 ms (real-time voice assistant threshold for in-car use)
 
 ---
@@ -83,6 +84,12 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 ---
 
 ## Slot Accuracy — Per-Intent Breakdown
+
+**Two metrics are now reported per variant** (captured in `data/results/predictions/<variant>.jsonl`):
+- **Slot acc (exact-match)** — every key-value pair must match the ground truth exactly; any extra or missing key is a full failure. Strict but understates practical quality.
+- **Slot F1** — precision/recall/F1 at the key-value level, excluding None-valued ground truth slots. Two variants: raw model output vs ground truth (`slot_f1_pct`), and schema-filtered output vs ground truth (`slot_f1_filtered_pct`). Schema filtering removes slot keys the model generated that are not in the per-intent allowed key set.
+
+The table below reports the original exact-match figures. Slot F1 and schema-filtered F1 are available per-example in the prediction JSONL files; aggregated figures will be added when the comparison table is next regenerated.
 
 Slot accuracy uses exact-match scoring: every key-value pair in the predicted JSON must match the ground truth exactly. Any extra or missing key counts as a failure. This is strict by design but understates practical extraction quality — a model adding an extra plausible slot (e.g. `"brightness": 100` where the label has none) scores 0 despite being correct.
 
