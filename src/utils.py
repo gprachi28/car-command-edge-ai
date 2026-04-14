@@ -13,6 +13,7 @@ Public API:
     - TRAINING_CONFIG: dict[str, float | int]
 """
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -194,6 +195,26 @@ def filter_slots(intent: str, slots: dict) -> dict:
     if allowed is None:
         return slots
     return {k: v for k, v in slots.items() if k in allowed}
+
+
+def parse_action(text: str) -> dict | None:
+    """Extract the first valid JSON object from generated text.
+
+    Args:
+        text: Raw model output string.
+
+    Returns:
+        Parsed dict or None if no valid JSON object found.
+    """
+    text = text.strip()
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start == -1 or end == 0:
+        return None
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        return None
 
 
 def build_variants(models_dir: Path) -> dict[str, Path]:

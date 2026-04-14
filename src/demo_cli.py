@@ -25,31 +25,13 @@ from src.utils import (
     filter_slots,
     get_logger,
     get_models_dir,
+    get_project_root,
+    parse_action,
 )
 
 logger = get_logger(__name__)
 
 MAX_TOKENS = 80  # car commands average 21-27 output tokens; 80 is a safe ceiling
-
-
-def _parse_action(text: str) -> dict | None:
-    """Extract the first valid JSON object from generated text.
-
-    Args:
-        text: Raw model output string.
-
-    Returns:
-        Parsed dict or None if no valid JSON object found.
-    """
-    text = text.strip()
-    start = text.find("{")
-    end = text.rfind("}") + 1
-    if start == -1 or end == 0:
-        return None
-    try:
-        return json.loads(text[start:end])
-    except json.JSONDecodeError:
-        return None
 
 
 def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
@@ -69,7 +51,6 @@ def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
     ttft_ms: float | None = None
     output_tokens: list[str] = []
 
-    depth = 0
     t_start = time.perf_counter()
     for response in stream_generate(
         model,
@@ -83,18 +64,11 @@ def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
         if ttft_ms is None:
             ttft_ms = (time.perf_counter() - t_start) * 1000
         output_tokens.append(response.text)
-        for ch in response.text:
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-        if depth == 0 and output_tokens:  # root JSON object closed — stop early
-            break
         if response.finish_reason is not None:
             break
 
     raw = "".join(output_tokens)
-    return _parse_action(raw), ttft_ms or 0.0, raw
+    return parse_action(raw), ttft_ms or 0.0, raw
 
 
 def main() -> None:
@@ -127,7 +101,7 @@ def main() -> None:
     print("\nCar Command Assistant")
     print(f"Model : {args.model}")
     print(f"Size  : {size_mb:.0f} MB")
-    print(f"Path  : {model_path.relative_to(model_path.parents[2])}")
+    print(f"Path  : {model_path.relative_to(get_project_root())}")
     print("\nLoading model...")
 
     model, tokenizer = load(str(model_path))

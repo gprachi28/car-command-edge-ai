@@ -54,6 +54,7 @@ from src.utils import (
     get_logger,
     get_models_dir,
     get_processed_dir,
+    parse_action,
 )
 
 logger = get_logger(__name__)
@@ -148,7 +149,6 @@ def _infer(model, tokenizer, prompt: str) -> tuple[float, float, float, str, int
     output_tokens: list[str] = []
     last_generation_tokens = 0
 
-    depth = 0
     t_start = time.perf_counter()
     for response in stream_generate(
         model,
@@ -169,13 +169,6 @@ def _infer(model, tokenizer, prompt: str) -> tuple[float, float, float, str, int
         peak_ram_mb = (
             response.peak_memory * 1024
         )  # mlx_lm reports in GB → convert to MB
-        for ch in response.text:
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-        if depth == 0 and output_tokens:  # root JSON object closed — stop early
-            break
         if response.finish_reason is not None:
             break
 
@@ -191,34 +184,18 @@ def _infer(model, tokenizer, prompt: str) -> tuple[float, float, float, str, int
     else:
         tps = 0.0
 
+    if ttft_ms is None:
+        # Model generated zero tokens — inference failure, not sub-ms TTFT
+        logger.warning("_infer: model produced no tokens for prompt: %r", prompt[:80])
+        ttft_ms = float("nan")
+
     return (
-        ttft_ms or 0.0,
+        ttft_ms,
         tps,
         peak_ram_mb,
         "".join(output_tokens),
         last_generation_tokens,
     )
-
-
-def _parse_action(text: str) -> dict | None:
-    """Extract the first valid JSON object from generated text.
-
-    Args:
-        text: Raw model output.
-
-    Returns:
-        Parsed dict or None if no valid JSON found.
-    """
-    text = text.strip()
-    # Find first '{' and last '}' to handle trailing tokens
-    start = text.find("{")
-    end = text.rfind("}") + 1
-    if start == -1 or end == 0:
-        return None
-    try:
-        return json.loads(text[start:end])
-    except json.JSONDecodeError:
-        return None
 
 
 def _slot_f1(pred_slots: dict, gt_slots: dict) -> tuple[float, float, float]:
@@ -428,7 +405,7 @@ def run_benchmark(
             ttft_ms, tps, ram_mb, output, n_tokens = _infer(
                 model, tokenizer, ex["prompt"]
             )
-            predicted = _parse_action(output)
+            predicted = parse_action(output)
             intent_correct = _is_correct(predicted, ex["ground_truth"])
 
             gt_slots = ex["ground_truth"].get("slots") or {}
@@ -458,7 +435,10 @@ def run_benchmark(
 
             # Extract utterance from prompt ("Command: X\nAction: " → "X")
             utterance = (
-                ex["prompt"].replace("Command: ", "").replace("\nAction: ", "").strip()
+                ex["prompt"]
+                .removeprefix("Command: ")
+                .removesuffix("\nAction: ")
+                .strip()
             )
             predictions.append(
                 {
