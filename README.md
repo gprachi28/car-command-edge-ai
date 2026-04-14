@@ -77,7 +77,9 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 
 ## Dataset
 
-Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents across three slot-density tiers.
+Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents across three slot-density tiers. The generator was rewritten from a flat-batch approach after the v1 dataset produced 13.7% empty-slot examples and ~18% status/query utterances — neither of which are valid car commands.
+
+
 
 Each intent is generated in **full** (maximum slots), **partial** (mid-range), and **minimal** (single-slot) tiers with tier-specific gold examples embedded in the prompt. Inline validation at generation time rejects None-valued slots, out-of-schema keys, and question/status utterances — no post-hoc cleaning pass needed.
 
