@@ -15,11 +15,17 @@ Public API:
 import argparse
 import json
 import time
-from pathlib import Path
 
 from mlx_lm import load, stream_generate
+from mlx_lm.sample_utils import make_sampler
 
-from src.utils import build_variants, dir_size_mb, get_logger, get_models_dir
+from src.utils import (
+    build_variants,
+    dir_size_mb,
+    filter_slots,
+    get_logger,
+    get_models_dir,
+)
 
 logger = get_logger(__name__)
 
@@ -63,11 +69,27 @@ def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
     ttft_ms: float | None = None
     output_tokens: list[str] = []
 
+    depth = 0
     t_start = time.perf_counter()
-    for response in stream_generate(model, tokenizer, prompt, max_tokens=MAX_TOKENS):
+    for response in stream_generate(
+        model,
+        tokenizer,
+        prompt,
+        max_tokens=MAX_TOKENS,
+        sampler=make_sampler(
+            temp=0.0
+        ),  # greedy decoding — deterministic, required for JSON
+    ):
         if ttft_ms is None:
             ttft_ms = (time.perf_counter() - t_start) * 1000
         output_tokens.append(response.text)
+        for ch in response.text:
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+        if depth == 0 and output_tokens:  # root JSON object closed — stop early
+            break
         if response.finish_reason is not None:
             break
 
@@ -81,11 +103,11 @@ def main() -> None:
     variants = build_variants(models_dir)
 
     parser = argparse.ArgumentParser(
-        description="Car Command Assistant — maps natural language to structured intent+slots",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Available variants:\n" + "\n".join(
-            f"  {k}" for k in variants
+        description=(
+            "Car Command Assistant — maps natural language to structured intent+slots"
         ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Available variants:\n" + "\n".join(f"  {k}" for k in variants),
     )
     parser.add_argument(
         "--model",
@@ -102,7 +124,7 @@ def main() -> None:
         return
 
     size_mb = dir_size_mb(model_path)
-    print(f"\nCar Command Assistant")
+    print("\nCar Command Assistant")
     print(f"Model : {args.model}")
     print(f"Size  : {size_mb:.0f} MB")
     print(f"Path  : {model_path.relative_to(model_path.parents[2])}")
@@ -128,7 +150,7 @@ def main() -> None:
             print(f"  [parse error] Raw output: {raw!r}")
         else:
             intent = parsed.get("intent", "unknown")
-            slots = parsed.get("slots", {})
+            slots = filter_slots(intent, parsed.get("slots") or {})
             print(
                 f"  Intent: {intent} | Slots: {json.dumps(slots)}  "
                 f"[TTFT: {ttft_ms:.0f} ms]"

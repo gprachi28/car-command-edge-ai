@@ -9,7 +9,7 @@ Metrics per variant:
     - TTFT pass              : True if TTFT < 200 ms (real-time threshold)
     - TPS                    : generation tokens/sec (from mlx_lm GenerationResponse)
     - RAM (MB)               : peak memory during inference (mlx_lm GenerationResponse)
-    - Accuracy (%)           : intent classification accuracy on 50 test examples
+    - Accuracy (%)           : intent classification accuracy on 319 test examples
     - Output tokens (avg)    : avg generated tokens per example (car commands <25)
     - Power (W)              : avg GPU+CPU power draw during benchmark (opt-in, sudo)
     - Energy/token (mWh/tok) : energy cost per output token — the metric automotive SoC
@@ -44,10 +44,12 @@ from typing import Generator
 
 import mlx.core as mx
 from mlx_lm import load, stream_generate
+from mlx_lm.sample_utils import make_sampler
 
 from src.utils import (
     build_variants,
     dir_size_mb,
+    filter_slots,
     get_data_dir,
     get_logger,
     get_models_dir,
@@ -140,23 +142,62 @@ def _infer(model, tokenizer, prompt: str) -> tuple[float, float, float, str, int
         output token count).
     """
     ttft_ms = None
-    tps = 0.0
+    t_first_token: float | None = None
+    t_last_token: float | None = None
     peak_ram_mb = 0.0
     output_tokens: list[str] = []
+    last_generation_tokens = 0
 
+    depth = 0
     t_start = time.perf_counter()
-    for response in stream_generate(model, tokenizer, prompt, max_tokens=MAX_TOKENS):
+    for response in stream_generate(
+        model,
+        tokenizer,
+        prompt,
+        max_tokens=MAX_TOKENS,
+        sampler=make_sampler(
+            temp=0.0
+        ),  # greedy decoding — deterministic, required for JSON
+    ):
+        t_now = time.perf_counter()
         if ttft_ms is None:
-            ttft_ms = (time.perf_counter() - t_start) * 1000
+            ttft_ms = (t_now - t_start) * 1000
+            t_first_token = t_now
+        t_last_token = t_now
         output_tokens.append(response.text)
-        tps = response.generation_tps
+        last_generation_tokens = response.generation_tokens
         peak_ram_mb = (
             response.peak_memory * 1024
         )  # mlx_lm reports in GB → convert to MB
+        for ch in response.text:
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+        if depth == 0 and output_tokens:  # root JSON object closed — stop early
+            break
         if response.finish_reason is not None:
             break
 
-    return ttft_ms or 0.0, tps, peak_ram_mb, "".join(output_tokens), len(output_tokens)
+    # Wall-clock TPS: tokens generated / elapsed generation time (excludes prefill).
+    # response.generation_tps is unreliable — MLX lazy evaluation means the timer fires
+    # before GPU kernels complete, inflating TPS 10-15x.
+    if (
+        t_first_token is not None
+        and t_last_token is not None
+        and t_last_token > t_first_token
+    ):
+        tps = last_generation_tokens / (t_last_token - t_first_token)
+    else:
+        tps = 0.0
+
+    return (
+        ttft_ms or 0.0,
+        tps,
+        peak_ram_mb,
+        "".join(output_tokens),
+        last_generation_tokens,
+    )
 
 
 def _parse_action(text: str) -> dict | None:
@@ -178,6 +219,41 @@ def _parse_action(text: str) -> dict | None:
         return json.loads(text[start:end])
     except json.JSONDecodeError:
         return None
+
+
+def _slot_f1(pred_slots: dict, gt_slots: dict) -> tuple[float, float, float]:
+    """Compute slot-level precision, recall, and F1 using key-value exact match.
+
+    None-valued slots in ground truth are excluded — they represent absent optional
+    slots and exact-match None comparison is unreliable across models.
+
+    Args:
+        pred_slots: Predicted slot dict from model output.
+        gt_slots: Ground truth slot dict.
+
+    Returns:
+        Tuple of (precision, recall, f1) in [0, 1].
+    """
+    gt_items = {k: v for k, v in gt_slots.items() if v is not None}
+    pred_items = {k: v for k, v in pred_slots.items() if v is not None}
+
+    if not gt_items and not pred_items:
+        return 1.0, 1.0, 1.0
+    if not pred_items:
+        return 0.0, 0.0, 0.0
+    if not gt_items:
+        # model predicted slots when none were expected
+        return 0.0, 1.0, 0.0
+
+    matched = sum(1 for k, v in pred_items.items() if gt_items.get(k) == v)
+    precision = matched / len(pred_items)
+    recall = matched / len(gt_items)
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
+    return precision, recall, f1
 
 
 def _is_correct(predicted: dict | None, ground_truth: dict) -> bool:
@@ -305,8 +381,9 @@ def run_benchmark(
             power draw. Requires sudo. Adds power_w and energy_per_token_mwh to result.
 
     Returns:
-        Dict with keys: variant, size_mb, ttft_ms, ttft_pass, tps, ram_mb,
-        accuracy_pct, output_tokens_avg, power_w, energy_per_token_mwh.
+        Dict with keys: variant, size_mb, ttft_ms, tps, ram_mb,
+        accuracy_pct, slot_accuracy_pct, slot_f1_pct, slot_f1_filtered_pct,
+        output_tokens_avg, power_w, energy_per_token_mwh.
     """
     if models_dir is None:
         models_dir = get_models_dir()
@@ -353,9 +430,25 @@ def run_benchmark(
             )
             predicted = _parse_action(output)
             intent_correct = _is_correct(predicted, ex["ground_truth"])
-            slots_correct = predicted is not None and predicted.get("slots") == ex[
-                "ground_truth"
-            ].get("slots")
+
+            gt_slots = ex["ground_truth"].get("slots") or {}
+            pred_slots_raw = (predicted.get("slots") or {}) if predicted else {}
+            pred_intent = predicted.get("intent") if predicted else None
+
+            # Schema-filtered slots: drop keys hallucinated beyond intent schema
+            pred_slots_filtered = (
+                filter_slots(pred_intent, pred_slots_raw)
+                if pred_intent
+                else pred_slots_raw
+            )
+
+            # Exact-match slot accuracy (original metric — strict)
+            slots_correct = predicted is not None and pred_slots_raw == gt_slots
+
+            # Slot F1 — raw (unfiltered) and schema-filtered
+            _, _, slot_f1_raw = _slot_f1(pred_slots_raw, gt_slots)
+            _, _, slot_f1_filtered = _slot_f1(pred_slots_filtered, gt_slots)
+
             if intent_correct:
                 correct += 1
             ttft_list.append(ttft_ms)
@@ -372,12 +465,15 @@ def run_benchmark(
                     "idx": i,
                     "utterance": utterance,
                     "gt_intent": ex["ground_truth"].get("intent"),
-                    "gt_slots": ex["ground_truth"].get("slots"),
+                    "gt_slots": gt_slots,
                     "raw_output": output.strip(),
-                    "pred_intent": predicted.get("intent") if predicted else None,
-                    "pred_slots": predicted.get("slots") if predicted else None,
+                    "pred_intent": pred_intent,
+                    "pred_slots": pred_slots_raw,
+                    "pred_slots_filtered": pred_slots_filtered,
                     "intent_correct": intent_correct,
                     "slots_correct": slots_correct,
+                    "slot_f1": round(slot_f1_raw, 4),
+                    "slot_f1_filtered": round(slot_f1_filtered, 4),
                     "parse_failed": predicted is None,
                     "output_tokens": n_tokens,
                 }
@@ -413,6 +509,10 @@ def run_benchmark(
 
     slots_correct_count = sum(1 for p in predictions if p["slots_correct"])
     slot_accuracy = 100 * slots_correct_count / len(eval_examples)
+    avg_slot_f1 = 100 * sum(p["slot_f1"] for p in predictions) / len(predictions)
+    avg_slot_f1_filtered = (
+        100 * sum(p["slot_f1_filtered"] for p in predictions) / len(predictions)
+    )
 
     result = {
         "variant": variant_key,
@@ -422,13 +522,16 @@ def run_benchmark(
         "ram_mb": round(avg_ram),
         "accuracy_pct": round(accuracy, 1),
         "slot_accuracy_pct": round(slot_accuracy, 1),
+        "slot_f1_pct": round(avg_slot_f1, 1),
+        "slot_f1_filtered_pct": round(avg_slot_f1_filtered, 1),
         "output_tokens_avg": round(avg_output_tokens, 1),
         "power_w": power_w,
         "energy_per_token_mwh": energy_per_token_mwh,
     }
     logger.info(
         "Done: %s | size=%.0fMB TTFT=%.1fms TPS=%.1f RAM=%.0fMB "
-        "intent_acc=%.1f%% slot_acc=%.1f%% tokens_avg=%.1f",
+        "intent_acc=%.1f%% slot_acc=%.1f%% "
+        "slot_f1=%.1f%% slot_f1_filtered=%.1f%% tokens_avg=%.1f",
         variant_key,
         size_mb,
         avg_ttft,
@@ -436,6 +539,8 @@ def run_benchmark(
         avg_ram,
         accuracy,
         slot_accuracy,
+        avg_slot_f1,
+        avg_slot_f1_filtered,
         avg_output_tokens,
     )
 
@@ -506,6 +611,8 @@ CSV_FIELDS = [
     "ram_mb",
     "accuracy_pct",
     "slot_accuracy_pct",
+    "slot_f1_pct",
+    "slot_f1_filtered_pct",
     "output_tokens_avg",
     "power_w",
     "energy_per_token_mwh",
