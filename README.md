@@ -22,7 +22,7 @@ Three compact LLMs are fine-tuned with LoRA, quantized to 4-bit and 8-bit, and b
 | **Models** | Llama 3.2 3B · Qwen 2.5 3B · SmolLM2 1.7B |
 | **Fine-tuning** | MLX-LM LoRA — native Apple Silicon, Metal backend |
 | **Quantization** | 4-bit and 8-bit MLX format |
-| **Dataset** | Synthetic — 14 intents, 1,571 utterances (Ollama `llama3.1:8b`) |
+| **Dataset** | Synthetic — 14 intents, ~1,200 utterances (Ollama `llama3.1:8b`) |
 | **Hardware** | Apple M4 Pro (~273 TOPS) |
 
 ---
@@ -30,7 +30,8 @@ Three compact LLMs are fine-tuned with LoRA, quantized to 4-bit and 8-bit, and b
 ## Pipeline
 
 ```
-generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
+generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
+                      Density tiers (full/partial/minimal) + inline validation
                       Stratified 80/20 split → train.jsonl / test.jsonl
         │
         └─► finetune_mlx.py    MLX-LM LoRA — 3 models, native Apple Silicon
@@ -76,18 +77,20 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
 
 ## Dataset
 
-Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents at three slot-depth tiers.
+Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents across three slot-density tiers.
+
+Each intent is generated in **full** (maximum slots), **partial** (mid-range), and **minimal** (single-slot) tiers with tier-specific gold examples embedded in the prompt. Inline validation at generation time rejects None-valued slots, out-of-schema keys, and question/status utterances — no post-hoc cleaning pass needed.
 
 | Command | Intent | Slots |
 |---------|--------|-------|
-| `Turn off the fan for rear zone.` | `set_climate` | `{"fan_speed": null, "zone": "rear"}` |
+| `Cool the front down to 20.` | `set_climate` | `{"zone": "front", "temperature": 20, "mode": "cool"}` |
 | `Turn the heat up on all seats to high` | `seat_control` | `{"heat": "high", "seat": "all"}` |
-| `Open the sunroof about halfway through!` | `window_control` | `{"window": "sunroof", "action": "open", "percentage": 50}` |
-| `Where is the nearest gas station?` | `navigate` | `{"destination_type": "gas_station"}` |
-| `How's the lane assist doing?` | `safety_assist` | `{"feature": "lane_assist", "action": "status"}` |
+| `Open the sunroof about halfway.` | `window_control` | `{"window": "sunroof", "action": "open", "percentage": 50}` |
+| `Navigate to the nearest gas station` | `navigate` | `{"destination_type": "gas_station"}` |
+| `Enable lane assist` | `safety_assist` | `{"feature": "lane_assist", "action": "enable"}` |
 | `Switch to sport, please` | `drive_mode` | `{"mode": "sport"}` |
 
-**1,571 utterances · 14 intents · 1,252 train / 319 test · stratified 80/20 split**
+**~1,200 utterances · 14 intents · ~960 train / ~240 test · stratified 80/20 split**
 
 ---
 
@@ -125,13 +128,12 @@ python -m src.demo_cli --model smollm2-4bit
 
 ```
 src/
-├── generate_dataset.py  # Synthetic dataset generation via Ollama
+├── generate_dataset.py  # Synthetic dataset generation via Ollama (density tiers)
 ├── finetune_mlx.py      # MLX-LM LoRA fine-tuning (active pipeline)
-├── finetune.py          # HF TRL + LoRA (reference / learning)
 ├── quantize.py          # MLX 4-bit and 8-bit quantization
 ├── benchmark.py         # Latency, throughput, memory, accuracy, energy
 ├── demo_cli.py          # Interactive car command demo
-└── utils.py             # Shared config and helpers
+└── utils.py             # Shared config, INTENT_SCHEMA, and helpers
 docs/
 ├── RESULTS.md           # Full benchmark results and analysis
 ├── MODEL_CARD.md        # Model card with training details and limitations
