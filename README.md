@@ -58,6 +58,7 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
 - **4-bit quantization costs ≤1% accuracy** across all models while cutting size by ~72%.
 - **All 9 variants meet the 200 ms TTFT target** in isolation. SmolLM2 variants (55–79 ms) leave substantial headroom for a full STT → LLM → TTS pipeline; Qwen BF16 (180 ms) and Llama BF16 (166 ms) leave little margin.
 - **SmolLM2 beats both larger models** on intent accuracy at every quantization level, despite being the smallest.
+- **Slot acc (exact-match) understates real extraction quality** — models generate additional plausible slots not in ground truth, which exact-match penalises. The benchmark also reports slot F1 (precision/recall) and schema-filtered slot F1 (slots filtered to the per-intent allowed key set) for a more meaningful comparison. The demo CLI applies the schema filter automatically.
 
 > **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for SmolLM2-4bit, still well within the 200 ms automotive target.
 
