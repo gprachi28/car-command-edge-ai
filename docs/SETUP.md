@@ -30,10 +30,8 @@ pip install -r requirements.txt
 ```
 
 Key packages:
-- `mlx-lm` — fine-tuning and quantization on Apple Silicon
-- `transformers`, `trl`, `peft` — HF reference fine-tuning pipeline
+- `mlx-lm` — fine-tuning, quantization, and inference on Apple Silicon
 - `ollama` — dataset generation
-- `torch` — used for reference fine-tuning path only (not required for MLX inference)
 
 ## 4. Configure secrets
 
@@ -45,7 +43,6 @@ Edit `.env` and fill in:
 
 ```
 HF_TOKEN=your_huggingface_token_here       # Required for Llama 3.2 3B
-GEMINI_API_KEY=your_gemini_api_key_here    # Optional — only for --backend gemini
 ```
 
 **Llama 3.2 3B is a gated model.** Before the download will work you must:
@@ -75,7 +72,7 @@ ollama serve
 python -m src.generate_dataset
 ```
 
-Writes per-intent JSONL files to `data/raw/synthetic/` and the processed split to `data/processed/train.jsonl` / `test.jsonl`. Resume-safe — re-running skips already-completed intents.
+Generates ~1,200 utterances across 14 intents using density tiers (full/partial/minimal) with inline validation. Writes per-intent JSONL files to `data/raw/synthetic/` and the processed split to `data/processed/train.jsonl` / `test.jsonl`. Resume-safe — re-running skips already-completed intents.
 
 ### Fine-tuning (MLX-LM LoRA)
 
@@ -114,7 +111,7 @@ Runs each of the 9 variants in its own subprocess for accurate peak RAM measurem
 ### Interactive demo
 
 ```bash
-python src/demo_cli.py --model smollm2-1.7b-4bit
+python -m src.demo_cli --model smollm2-4bit
 ```
 
 Loads the selected quantized model and starts an interactive loop. Type any car command and the model outputs structured JSON.

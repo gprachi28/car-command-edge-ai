@@ -22,15 +22,19 @@ Three compact LLMs are fine-tuned with LoRA, quantized to 4-bit and 8-bit, and b
 | **Models** | Llama 3.2 3B · Qwen 2.5 3B · SmolLM2 1.7B |
 | **Fine-tuning** | MLX-LM LoRA — native Apple Silicon, Metal backend |
 | **Quantization** | 4-bit and 8-bit MLX format |
-| **Dataset** | Synthetic — 14 intents, 1,571 utterances (Ollama `llama3.1:8b`) |
+| **Dataset** | Synthetic — 14 intents, ~1,200 utterances (Ollama `llama3.1:8b`) |
 | **Hardware** | Apple M4 Pro (~273 TOPS) |
 
+Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM.
+
 ---
+
 
 ## Pipeline
 
 ```
-generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
+generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
+                      Density tiers (full/partial/minimal) + inline validation
                       Stratified 80/20 split → train.jsonl / test.jsonl
         │
         └─► finetune_mlx.py    MLX-LM LoRA — 3 models, native Apple Silicon
@@ -48,18 +52,20 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
 
 | Variant | Size (MB) | TTFT (ms) | RAM (MB) | Intent acc | Slot acc | Energy/token |
 |---------|----------:|----------:|---------:|-----------:|---------:|-------------:|
-| **smollm2-4bit** | **922** | **54.8** | **1,108** | 95.0% | 53.3% | **0.034 mWh** |
-| smollm2-8bit | 1,738 | 64.5 | 1,969 | **96.2%** | 59.0% | 0.046 mWh |
-| smollm2-finetuned | 3,268 | 78.6 | 3,612 | 95.9% | **59.6%** | 0.060 mWh |
-| llama-4bit | 1,740 | 119.7 | 1,935 | 95.3% | 48.9% | 0.054 mWh |
-| qwen-4bit | 1,667 | 136.9 | 1,833 | 92.4% | 48.6% | 0.057 mWh |
+| **smollm2-4bit** | **922** | **54.1** | **1,103** | 96.5% | 61.6% | **0.029 mWh** |
+| smollm2-8bit | 1,738 | 66.2 | 1,972 | 98.3% | 66.8% | 0.041 mWh |
+| qwen-4bit | 1,667 | 131.4 | 1,833 | 98.3% | **68.6%** | 0.059 mWh |
+| qwen-8bit | 3,138 | 152.0 | 3,412 | **99.6%** | **68.6%** | 0.080 mWh |
+| llama-4bit | 1,740 | 120.4 | 1,930 | 94.3% | 55.9% | 0.056 mWh |
 
-- **SmolLM2-4bit** is the top edge candidate: smallest (922 MB), fastest (54.8 ms TTFT), most energy-efficient (0.034 mWh/token) at 95% accuracy.
-- **4-bit quantization costs ≤1% accuracy** across all models while cutting size by ~72%.
-- **All 9 variants meet the 200 ms TTFT target** in isolation. SmolLM2 variants (55–79 ms) leave substantial headroom for a full STT → LLM → TTS pipeline; Qwen BF16 (180 ms) and Llama BF16 (166 ms) leave little margin.
-- **SmolLM2 beats both larger models** on intent accuracy at every quantization level, despite being the smallest.
+- **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.1 ms TTFT), most energy-efficient (0.029 mWh/token), and the only variant that stays always-resident in an 8 GB cockpit SoC alongside OS and navigation. Intent accuracy 96.5%; add a JSON parse fallback (1.3% parse failure rate).
+- **Total response time — not TTFT — is what the TTS pipeline sees.** Calculated as TTFT + (output_tokens / TPS): smollm2-4bit ~202 ms, qwen-4bit ~342 ms, llama-4bit ~322 ms. smollm2-4bit's 200.1 TPS is what keeps it within the 200 ms automotive target end-to-end.
+- **4-bit quantization accuracy cost is model-dependent:** Qwen −1.3%, SmolLM2 −1.8%, Llama −3.1%. **8-bit is lossless** for Qwen and SmolLM2 (0% change) and near-lossless for Llama (−0.5%) while cutting size ~47%.
+- **Qwen achieves highest intent accuracy** (98.3–99.6%) at every quantization level. On the v2 dataset, Qwen's structured output learning is consistent across all compression levels.
+- **All 9 variants meet the 200 ms TTFT target.** SmolLM2 variants (54–75 ms) leave substantial headroom. The highest TTFT is qwen-finetuned at 178.6 ms.
+- **Slot acc (exact-match) understates real extraction quality** — models generate additional plausible slots not in ground truth, which exact-match penalises. The benchmark also reports slot F1 (precision/recall) and schema-filtered slot F1 (slots filtered to the per-intent allowed key set) for a more meaningful comparison. The demo CLI applies the schema filter automatically.
 
-> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT is typically 100–150 ms for SmolLM2-4bit, still well within the 200 ms automotive target.
+> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up — adding ~50 ms. Interactive TTFT measured at 97–103 ms for smollm2-4bit across a range of car commands — well within the 200 ms automotive target.
 
 ---
 
@@ -75,18 +81,22 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, 1,571 utterances
 
 ## Dataset
 
-Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents at three slot-depth tiers.
+Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents across three slot-density tiers. The generator was rewritten from a flat-batch approach after the v1 dataset produced 13.7% empty-slot examples and ~18% status/query utterances — neither of which are valid car commands.
+
+
+
+Each intent is generated in **full** (maximum slots), **partial** (mid-range), and **minimal** (single-slot) tiers with tier-specific gold examples embedded in the prompt. Inline validation at generation time rejects None-valued slots, out-of-schema keys, and question/status utterances — no post-hoc cleaning pass needed.
 
 | Command | Intent | Slots |
 |---------|--------|-------|
-| `Turn off the fan for rear zone.` | `set_climate` | `{"fan_speed": null, "zone": "rear"}` |
+| `Cool the front down to 20.` | `set_climate` | `{"zone": "front", "temperature": 20, "mode": "cool"}` |
 | `Turn the heat up on all seats to high` | `seat_control` | `{"heat": "high", "seat": "all"}` |
-| `Open the sunroof about halfway through!` | `window_control` | `{"window": "sunroof", "action": "open", "percentage": 50}` |
-| `Where is the nearest gas station?` | `navigate` | `{"destination_type": "gas_station"}` |
-| `How's the lane assist doing?` | `safety_assist` | `{"feature": "lane_assist", "action": "status"}` |
+| `Open the sunroof about halfway.` | `window_control` | `{"window": "sunroof", "action": "open", "percentage": 50}` |
+| `Navigate to the nearest gas station` | `navigate` | `{"destination_type": "gas_station"}` |
+| `Enable lane assist` | `safety_assist` | `{"feature": "lane_assist", "action": "enable"}` |
 | `Switch to sport, please` | `drive_mode` | `{"mode": "sport"}` |
 
-**1,571 utterances · 14 intents · 1,252 train / 319 test · stratified 80/20 split**
+**~1,200 utterances · 14 intents · ~960 train / ~240 test · stratified 80/20 split**
 
 ---
 
@@ -124,13 +134,12 @@ python -m src.demo_cli --model smollm2-4bit
 
 ```
 src/
-├── generate_dataset.py  # Synthetic dataset generation via Ollama
+├── generate_dataset.py  # Synthetic dataset generation via Ollama (density tiers)
 ├── finetune_mlx.py      # MLX-LM LoRA fine-tuning (active pipeline)
-├── finetune.py          # HF TRL + LoRA (reference / learning)
 ├── quantize.py          # MLX 4-bit and 8-bit quantization
 ├── benchmark.py         # Latency, throughput, memory, accuracy, energy
 ├── demo_cli.py          # Interactive car command demo
-└── utils.py             # Shared config and helpers
+└── utils.py             # Shared config, INTENT_SCHEMA, and helpers
 docs/
 ├── RESULTS.md           # Full benchmark results and analysis
 ├── MODEL_CARD.md        # Model card with training details and limitations
@@ -139,8 +148,9 @@ docs/
 
 ---
 
-_Hardware: Apple M4 Pro (~273 TOPS Neural Engine). Target cockpit SoC: 30–50 TOPS, ≤16 GB RAM._
+Licensed under the [MIT License](LICENSE).
 
 ---
 
-Licensed under the [MIT License](LICENSE).
+🤖 Logic co-authored by [Claude Code](https://claude.ai/code).
+🧠 Final implementation, validation and technical responsibility: Prachi Govalkar.

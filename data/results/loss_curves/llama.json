@@ -1,0 +1,66 @@
+[
+  {
+    "iter": 1,
+    "val_loss": 3.737
+  },
+  {
+    "iter": 50,
+    "train_loss": 1.262
+  },
+  {
+    "iter": 100,
+    "train_loss": 0.719
+  },
+  {
+    "iter": 150,
+    "train_loss": 0.638
+  },
+  {
+    "iter": 200,
+    "val_loss": 0.571,
+    "train_loss": 0.582
+  },
+  {
+    "iter": 250,
+    "train_loss": 0.483
+  },
+  {
+    "iter": 300,
+    "train_loss": 0.424
+  },
+  {
+    "iter": 350,
+    "train_loss": 0.434
+  },
+  {
+    "iter": 400,
+    "val_loss": 0.528,
+    "train_loss": 0.428
+  },
+  {
+    "iter": 450,
+    "train_loss": 0.435
+  },
+  {
+    "iter": 500,
+    "train_loss": 0.34
+  },
+  {
+    "iter": 550,
+    "train_loss": 0.336
+  },
+  {
+    "iter": 600,
+    "val_loss": 0.538,
+    "train_loss": 0.351
+  },
+  {
+    "iter": 650,
+    "train_loss": 0.357
+  },
+  {
+    "iter": 678,
+    "val_loss": 0.534,
+    "train_loss": 0.366
+  }
+]

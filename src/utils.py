@@ -13,6 +13,7 @@ Public API:
     - TRAINING_CONFIG: dict[str, float | int]
 """
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -149,12 +150,78 @@ TRAINING_CONFIG: Final[dict[str, float | int]] = {
 }
 
 
+# Allowed slot keys per intent — matches generate_dataset.py INTENT_SCHEMAS_V2.
+# Used by benchmark.py and demo_cli.py to filter over-generated slots.
+INTENT_SCHEMA: Final[dict[str, frozenset[str]]] = {
+    "set_climate": frozenset({"zone", "temperature", "mode", "fan_speed", "unit"}),
+    "navigate": frozenset(
+        {
+            "destination",
+            "destination_type",
+            "route_preference",
+            "arrival_time",
+            "waypoint",
+        }
+    ),
+    "seat_control": frozenset({"seat", "adjustment", "lumbar", "heat", "memory"}),
+    "set_lighting": frozenset({"zone", "color", "brightness", "mode"}),
+    "play_media": frozenset({"source", "query", "artist", "genre", "station"}),
+    "adjust_volume": frozenset({"direction", "level", "step"}),
+    "window_control": frozenset({"window", "action", "percentage"}),
+    "cruise_control": frozenset({"action", "speed", "unit", "gap"}),
+    "connectivity": frozenset({"feature", "action", "device_name"}),
+    "call_contact": frozenset({"contact_name", "contact_type"}),
+    "read_message": frozenset({"contact_name", "message_type"}),
+    "safety_assist": frozenset({"feature", "action"}),
+    "vehicle_info": frozenset({"query_type"}),
+    "drive_mode": frozenset({"mode"}),
+}
+
+
+def filter_slots(intent: str, slots: dict) -> dict:
+    """Remove slots not in the allowed schema for the given intent.
+
+    Drops hallucinated keys the model adds beyond what the intent schema
+    defines. Unknown intents are passed through unchanged.
+
+    Args:
+        intent: Predicted intent string.
+        slots: Raw slot dict from model output.
+
+    Returns:
+        Slot dict with only schema-allowed keys retained.
+    """
+    allowed = INTENT_SCHEMA.get(intent)
+    if allowed is None:
+        return slots
+    return {k: v for k, v in slots.items() if k in allowed}
+
+
+def parse_action(text: str) -> dict | None:
+    """Extract the first valid JSON object from generated text.
+
+    Args:
+        text: Raw model output string.
+
+    Returns:
+        Parsed dict or None if no valid JSON object found.
+    """
+    text = text.strip()
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start == -1 or end == 0:
+        return None
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        return None
+
+
 def build_variants(models_dir: Path) -> dict[str, Path]:
     """Return ordered mapping of variant key -> model directory path.
 
     Single source of truth for all 9 benchmarked variants. Used by both
-    benchmark.py and demo_cli.py to avoid path drift (especially for the
-    Llama v2 re-trained paths).
+    benchmark.py and demo_cli.py.
 
     Args:
         models_dir: Project models/ directory (from get_models_dir()).
@@ -171,7 +238,7 @@ def build_variants(models_dir: Path) -> dict[str, Path]:
         "qwen-finetuned": finetuned / "qwen-mlx",
         "qwen-4bit": quantized / "qwen-4bit",
         "qwen-8bit": quantized / "qwen-8bit",
-        "llama-finetuned": finetuned / "llama-mlx-v2",
-        "llama-4bit": quantized / "llama-4bit-v2",
-        "llama-8bit": quantized / "llama-8bit-v2",
+        "llama-finetuned": finetuned / "llama-mlx",
+        "llama-4bit": quantized / "llama-4bit",
+        "llama-8bit": quantized / "llama-8bit",
     }

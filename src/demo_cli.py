@@ -15,35 +15,23 @@ Public API:
 import argparse
 import json
 import time
-from pathlib import Path
 
 from mlx_lm import load, stream_generate
+from mlx_lm.sample_utils import make_sampler
 
-from src.utils import build_variants, dir_size_mb, get_logger, get_models_dir
+from src.utils import (
+    build_variants,
+    dir_size_mb,
+    filter_slots,
+    get_logger,
+    get_models_dir,
+    get_project_root,
+    parse_action,
+)
 
 logger = get_logger(__name__)
 
 MAX_TOKENS = 80  # car commands average 21-27 output tokens; 80 is a safe ceiling
-
-
-def _parse_action(text: str) -> dict | None:
-    """Extract the first valid JSON object from generated text.
-
-    Args:
-        text: Raw model output string.
-
-    Returns:
-        Parsed dict or None if no valid JSON object found.
-    """
-    text = text.strip()
-    start = text.find("{")
-    end = text.rfind("}") + 1
-    if start == -1 or end == 0:
-        return None
-    try:
-        return json.loads(text[start:end])
-    except json.JSONDecodeError:
-        return None
 
 
 def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
@@ -64,7 +52,15 @@ def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
     output_tokens: list[str] = []
 
     t_start = time.perf_counter()
-    for response in stream_generate(model, tokenizer, prompt, max_tokens=MAX_TOKENS):
+    for response in stream_generate(
+        model,
+        tokenizer,
+        prompt,
+        max_tokens=MAX_TOKENS,
+        sampler=make_sampler(
+            temp=0.0
+        ),  # greedy decoding — deterministic, required for JSON
+    ):
         if ttft_ms is None:
             ttft_ms = (time.perf_counter() - t_start) * 1000
         output_tokens.append(response.text)
@@ -72,7 +68,7 @@ def _infer(model, tokenizer, utterance: str) -> tuple[dict | None, float, str]:
             break
 
     raw = "".join(output_tokens)
-    return _parse_action(raw), ttft_ms or 0.0, raw
+    return parse_action(raw), ttft_ms or 0.0, raw
 
 
 def main() -> None:
@@ -81,11 +77,11 @@ def main() -> None:
     variants = build_variants(models_dir)
 
     parser = argparse.ArgumentParser(
-        description="Car Command Assistant — maps natural language to structured intent+slots",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Available variants:\n" + "\n".join(
-            f"  {k}" for k in variants
+        description=(
+            "Car Command Assistant — maps natural language to structured intent+slots"
         ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Available variants:\n" + "\n".join(f"  {k}" for k in variants),
     )
     parser.add_argument(
         "--model",
@@ -102,10 +98,10 @@ def main() -> None:
         return
 
     size_mb = dir_size_mb(model_path)
-    print(f"\nCar Command Assistant")
+    print("\nCar Command Assistant")
     print(f"Model : {args.model}")
     print(f"Size  : {size_mb:.0f} MB")
-    print(f"Path  : {model_path.relative_to(model_path.parents[2])}")
+    print(f"Path  : {model_path.relative_to(get_project_root())}")
     print("\nLoading model...")
 
     model, tokenizer = load(str(model_path))
@@ -128,7 +124,7 @@ def main() -> None:
             print(f"  [parse error] Raw output: {raw!r}")
         else:
             intent = parsed.get("intent", "unknown")
-            slots = parsed.get("slots", {})
+            slots = filter_slots(intent, parsed.get("slots") or {})
             print(
                 f"  Intent: {intent} | Slots: {json.dumps(slots)}  "
                 f"[TTFT: {ttft_ms:.0f} ms]"

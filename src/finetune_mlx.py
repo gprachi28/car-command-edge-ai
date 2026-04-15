@@ -1,9 +1,8 @@
 """Fine-tune Llama 3.2 3B, Qwen 2.5 3B, SmolLM2 1.7B using MLX-LM LoRA.
 
 Uses Apple Silicon's native MLX framework instead of PyTorch/MPS.
-Mirrors finetune.py in structure for easy comparison, but replaces
-HF TRL + PEFT with mlx_lm.lora — which runs entirely on Metal with no
-CPU fallbacks and produces adapters ready for mlx_lm quantization.
+Runs entirely on Metal via mlx_lm.lora with no CPU fallbacks.
+Produces adapters ready for mlx_lm quantization.
 
 Why MLX over TRL on Mac:
     - MPS backend in PyTorch has incomplete op coverage → silent CPU fallbacks
