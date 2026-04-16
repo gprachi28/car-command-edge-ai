@@ -2,6 +2,7 @@
 
 > Fine-tuning, quantizing, and benchmarking small language models for on-device car voice command understanding — Apple Silicon (M4 Pro).
 
+![Alternative Text](images/car_commands_demo.png)
 ---
 
 ## What It Does
