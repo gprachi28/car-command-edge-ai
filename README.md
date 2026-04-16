@@ -2,14 +2,13 @@
 
 > Fine-tuning, quantizing, and benchmarking small language models for on-device car voice command understanding — Apple Silicon (M4 Pro).
 
-![Alternative Text](images/car_commands_demo.png)
 ---
 
 ## What It Does
 
 An end-to-end edge AI pipeline that takes a natural language car command and produces structured intent + slot JSON:
 
-<img width="1114" height="329" alt="demo" src="https://github.com/user-attachments/assets/2817e2de-f007-4b7d-8688-17f50b00dacb" />
+<img alt="car_commands_demo" src="images/car_commands_demo.png" />
 
 Three compact LLMs are fine-tuned with LoRA, quantized to 4-bit and 8-bit, and benchmarked across 9 variants for latency, memory, accuracy, and energy.
 
