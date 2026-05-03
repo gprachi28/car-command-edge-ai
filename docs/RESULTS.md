@@ -74,9 +74,9 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 
 **Slot acc (exact-match)** — the full predicted slot dict must equal ground truth exactly; any extra or missing key scores 0. Strict but understates practical quality.
 
-**Slot F1** — precision/recall/F1 over the set of `key: value` pairs. Partial credit for getting most slots right even when the model adds an extra one. Example: ground truth `{"zone": "front", "mode": "cool"}`, model outputs `{"zone": "front", "mode": "cool", "fan_speed": 1}` → exact-match 0%, Slot F1 80%.
+**Slot F1** — precision/recall/F1 over the set of `key: value` pairs. Partial credit for getting most slots right even when the model adds an extra one. Example: ground truth `{"zone": "front", "mode": "cool"}`, model outputs `{"zone": "front", "mode": "cool", "fan_speed": 1}` → exact-match 0%, precision 2/3, recall 2/2 → Slot F1 80%.
 
-**Schema F1** — same F1 calculation, but extra keys not in the per-intent allowed schema are stripped from the model output before scoring. Separates hallucinating a plausible-but-invalid key (penalised by Slot F1) from over-generating a valid key the label didn't include (not penalised by Schema F1). In these results the two numbers are close, meaning models mostly over-generate within-schema slots rather than confusing intent vocabularies.
+**Schema F1** — same F1 calculation, but extra keys not in the per-intent allowed schema are stripped from the model output before scoring. `fan_speed` is a valid `set_climate` key, so it is kept — precision 2/3, recall 2/2 → Schema F1 80% (same as Slot F1 here). If instead the model output `{"zone": "front", "mode": "cool", "artist": "Taylor Swift"}`, schema filtering strips `artist` (not a `set_climate` key) → precision 2/2, recall 2/2 → Schema F1 100% vs Slot F1 67%. In these results the two numbers are close, meaning models mostly over-generate within-schema slots rather than confusing intent vocabularies.
 
 ---
 
