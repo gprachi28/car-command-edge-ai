@@ -52,10 +52,14 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 
 | Variant | Size (MB) | TTFT (ms) | RAM (MB) | Intent acc | Slot F1 | Energy/token |
 |---------|----------:|----------:|---------:|-----------:|--------:|-------------:|
-| **smollm2-4bit** | **922** | **54.1** | **1,103** | 96.5% | 79.4% | **0.029 mWh** |
+| smollm2-finetuned *(BF16)* | 3,268 | 74.8 | 3,608 | 98.3% | 83.6% | 0.054 mWh |
 | smollm2-8bit | 1,738 | 66.2 | 1,972 | 98.3% | 83.8% | 0.041 mWh |
-| qwen-4bit | 1,667 | 131.4 | 1,833 | 98.3% | **83.8%** | 0.059 mWh |
+| **smollm2-4bit** | **922** | **54.1** | **1,103** | 96.5% | 79.4% | **0.029 mWh** |
+| qwen-finetuned *(BF16)* | 5,897 | 178.6 | 6,385 | **99.6%** | 83.7% | 0.117 mWh |
 | qwen-8bit | 3,138 | 152.0 | 3,412 | **99.6%** | 83.3% | 0.080 mWh |
+| qwen-4bit | 1,667 | 131.4 | 1,833 | 98.3% | **83.8%** | 0.059 mWh |
+| llama-finetuned *(BF16)* | 6,144 | 165.0 | 6,661 | 97.4% | 79.0% | 0.114 mWh |
+| llama-8bit | 3,272 | 133.4 | 3,568 | 96.9% | 78.5% | 0.079 mWh |
 | llama-4bit | 1,740 | 120.4 | 1,930 | 94.3% | 74.1% | 0.056 mWh |
 
 - **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.1 ms TTFT), most energy-efficient (0.029 mWh/token), and the only variant that stays always-resident in an 8 GB cockpit SoC alongside OS and navigation. Add a JSON parse fallback (1.3% parse failure rate).
@@ -72,7 +76,7 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 | | |
 |---|---|
 | **[Full Results & Analysis](docs/RESULTS.md)** | Fine-tuning, quantization, benchmark table, per-intent slot accuracy breakdown |
-| **[Model Card](docs/MODEL_CARD.md)** | Architecture, training details, limitations, recommendations |
+| **[Model Card](docs/MODEL_CARD.md)** | Architecture, training details, limitations, recommendations, and deployment gap (M4 Pro → Qualcomm cockpit SoC) |
 | **[Setup Guide](docs/SETUP.md)** | Environment setup, dependencies, and reproduction steps |
 
 ---
