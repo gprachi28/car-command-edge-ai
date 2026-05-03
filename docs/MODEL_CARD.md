@@ -182,6 +182,23 @@ Evaluated on 229 examples (231-example stratified 20% hold-out, 14 intent classe
 
 ---
 
+## Deployment Gap — M4 Pro to Qualcomm Cockpit SoC
+
+This project was developed and benchmarked on Apple M4 Pro (~273 TOPS, MLX/Metal runtime). A production cockpit SoC (e.g. Snapdragon Ride Flex infotainment partition) runs at 30–50 TOPS with 8–16 GB shared RAM. The gaps:
+
+| Area | M4 Pro | Cockpit SoC | What's needed |
+|------|--------|-------------|---------------|
+| Runtime | MLX / Metal | QNN / ONNX Runtime | Re-export to ONNX; re-quantize with Qualcomm AI Hub tools — MLX weights are not portable |
+| Compute | ~273 TOPS | 30–50 TOPS | TPS drops ~4–6×; TTFT increases — only `smollm2-4bit` is expected to stay within 200 ms total response time |
+| Memory | Large unified pool | 2–3 GB headroom for voice AI | Only `smollm2-4bit` (1,103 MB RAM) fits always-resident; others require on-demand loading with a cold-start penalty |
+| Thermal | Active cooling | Passive / coolant loop | 4-bit models draw 15–15.5 W peak — must be validated against the SoC's thermal design power |
+| JSON reliability | 1.3% parse failures (smollm2-4bit) | Zero tolerance | Add constrained decoding (`outlines` / `lm-format-enforcer`) or a JSON parse fallback |
+| Safety intents | No confirmation step | Required | `cruise_control` and `safety_assist` slot accuracy (71–88%) needs a driver confirmation prompt before execution |
+
+The model selection and quantization analysis carry over directly. The MLX-specific numbers do not.
+
+---
+
 ## Reproducibility
 
 ```bash
