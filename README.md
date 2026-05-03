@@ -85,8 +85,6 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 
 Synthetic car commands generated via Ollama (`llama3.1:8b`), covering 14 intents across three slot-density tiers. The generator was rewritten from a flat-batch approach after the v1 dataset produced 13.7% empty-slot examples and ~18% status/query utterances — neither of which are valid car commands.
 
-
-
 Each intent is generated in **full** (maximum slots), **partial** (mid-range), and **minimal** (single-slot) tiers with tier-specific gold examples embedded in the prompt. Inline validation at generation time rejects None-valued slots, out-of-schema keys, and question/status utterances — no post-hoc cleaning pass needed.
 
 | Command | Intent | Slots |
@@ -127,25 +125,29 @@ python -m src.demo_cli --model smollm2-4bit
 
 > Requires `HF_TOKEN` in `.env` for Llama 3.2 3B (gated model). See `.env.example`.
 
-
-
-
 ---
 
 ## Project Structure
 
 ```
 src/
-├── generate_dataset.py  # Synthetic dataset generation via Ollama (density tiers)
-├── finetune_mlx.py      # MLX-LM LoRA fine-tuning (active pipeline)
-├── quantize.py          # MLX 4-bit and 8-bit quantization
-├── benchmark.py         # Latency, throughput, memory, accuracy, energy
-├── demo_cli.py          # Interactive car command demo
-└── utils.py             # Shared config, INTENT_SCHEMA, and helpers
+├── generate_dataset.py   # Synthetic dataset generation via Ollama (density tiers)
+├── dataset.py            # Split/save/dedup/metadata utilities
+├── finetune_mlx.py       # MLX-LM LoRA fine-tuning (active pipeline)
+├── quantize.py           # MLX 4-bit and 8-bit quantization
+├── benchmark.py          # Latency, throughput, memory, accuracy, energy
+├── plot_losses.py        # Loss curve plots from training logs
+├── demo_cli.py           # Interactive car command demo
+└── utils.py              # Shared config, INTENT_SCHEMA, and helpers
+scripts/
+└── run_benchmark.sh      # Per-process benchmark runner for accurate RAM isolation
+tests/
+├── test_dataset.py       # Dataset split/save/dedup utilities
+└── test_generate_dataset.py  # Dataset generation tests
 docs/
-├── RESULTS.md           # Full benchmark results and analysis
-├── MODEL_CARD.md        # Model card with training details and limitations
-└── SETUP.md             # Environment setup and reproduction guide
+├── RESULTS.md            # Full benchmark results and analysis
+├── MODEL_CARD.md         # Model card with training details, limitations, deployment gap
+└── SETUP.md              # Environment setup and reproduction guide
 ```
 
 ---
