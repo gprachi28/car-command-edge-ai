@@ -114,7 +114,7 @@ Runs each of the 9 variants in its own subprocess for accurate peak RAM measurem
 python -m src.demo_cli --model smollm2-4bit
 ```
 
-Loads the selected quantized model and starts an interactive loop. Type any car command and the model outputs structured JSON.
+Loads the selected quantized model and starts an interactive loop. Type any car command and the model outputs structured JSON. Press `Ctrl+C` to exit.
 
 ---
 
