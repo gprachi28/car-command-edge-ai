@@ -58,14 +58,12 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 | qwen-8bit | 3,138 | 152.0 | 3,412 | **99.6%** | 83.3% | 0.080 mWh |
 | llama-4bit | 1,740 | 120.4 | 1,930 | 94.3% | 74.1% | 0.056 mWh |
 
-- **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.1 ms TTFT), most energy-efficient (0.029 mWh/token), and the only variant that stays always-resident in an 8 GB cockpit SoC alongside OS and navigation. Intent accuracy 96.5%; add a JSON parse fallback (1.3% parse failure rate).
-- **Total response time — not TTFT — is what the TTS pipeline sees.** Calculated as TTFT + (output_tokens / TPS): smollm2-4bit ~202 ms, qwen-4bit ~342 ms, llama-4bit ~322 ms. smollm2-4bit's 200.1 TPS is what keeps it within the 200 ms automotive target end-to-end.
-- **4-bit quantization accuracy cost is model-dependent:** Qwen −1.3%, SmolLM2 −1.8%, Llama −3.1%. **8-bit is lossless** for Qwen and SmolLM2 (0% change) and near-lossless for Llama (−0.5%) while cutting size ~47%.
-- **Qwen achieves highest intent accuracy** (98.3–99.6%) at every quantization level. On the v2 dataset, Qwen's structured output learning is consistent across all compression levels.
-- **All 9 variants meet the 200 ms TTFT target.** SmolLM2 variants (54–75 ms) leave substantial headroom. The highest TTFT is qwen-finetuned at 178.6 ms.
-- **Slot acc (exact-match) understates real extraction quality** — models generate additional plausible slots not in ground truth, which exact-match penalises. Slot F1 (precision/recall at key-value level) is 74–84% across variants; schema-filtered F1 (slots stripped to the per-intent allowed key set) is nearly identical, meaning models over-generate within-schema rather than confusing intent vocabularies. The demo CLI applies the schema filter automatically.
+- **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.1 ms TTFT), most energy-efficient (0.029 mWh/token), and the only variant that stays always-resident in an 8 GB cockpit SoC alongside OS and navigation. Add a JSON parse fallback (1.3% parse failure rate).
+- **Total response time — not TTFT — is what the TTS pipeline sees.** TTFT + (output_tokens / TPS): smollm2-4bit ~202 ms, qwen-4bit ~342 ms. smollm2-4bit is the only 4-bit variant within the 200 ms automotive target end-to-end.
+- **Qwen achieves the highest intent accuracy** (98.3–99.6%) at every quantization level. 4-bit accuracy cost: Qwen −1.3%, SmolLM2 −1.8%, Llama −3.1%. 8-bit is lossless for Qwen and SmolLM2, near-lossless for Llama (−0.5%), while cutting size ~47%.
+- **Slot F1** (precision/recall at the key-value level) is 74–84% across variants — a more honest measure than exact-match slot accuracy, which penalises any extra slot the model generates even if it is plausible.
 
-> **Note on benchmark vs interactive TTFT:** The benchmark numbers above are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use (the demo CLI), macOS throttles the GPU clock and spins down compute units during the pause while you type. The next query has to wait for them to ramp back up — adding ~50 ms. Interactive TTFT measured at 97–103 ms for smollm2-4bit across a range of car commands — well within the 200 ms automotive target.
+> **Benchmark vs interactive TTFT:** Benchmark numbers are measured back-to-back with no idle time, keeping Metal compute units active. In interactive use, GPU clock ramps down between queries, adding ~50 ms. Interactive TTFT for smollm2-4bit: 97–103 ms — well within the 200 ms target.
 
 ---
 
