@@ -6,7 +6,7 @@ that maps natural-language car commands to structured intent+slot JSON.
 Usage:
     python src/demo_cli.py --model smollm2-4bit
 
-Exit with Ctrl+C or an empty input line.
+Exit with Ctrl+C, an empty input line, or by typing 'exit' / 'quit'.
 
 Public API:
     - main() -> None
@@ -106,7 +106,7 @@ def main() -> None:
 
     model, tokenizer = load(str(model_path))
 
-    print("Ready. Type a car command, or press Enter / Ctrl+C to quit.\n")
+    print("Ready. Type a car command. Type 'exit' or press Ctrl+C to quit.\n")
 
     while True:
         try:
@@ -115,7 +115,8 @@ def main() -> None:
             print("\nGoodbye.")
             break
 
-        if not utterance:
+        if not utterance or utterance.lower() in {"exit", "quit", "/quit", "q"}:
+            print("Goodbye.")
             break
 
         parsed, ttft_ms, raw = _infer(model, tokenizer, utterance)
