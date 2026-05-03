@@ -46,19 +46,19 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 
 ## Benchmark Table
 
-| Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Output tokens | Power (W) | Energy/token (mWh) ↓ |
-|---------|----------:|----------:|----:|---------:|---------:|----------:|-------------:|----------:|-------------------:|
-| smollm2-finetuned | 3,268 | 74.8 | 72.1 | 3,608 | 98.3% | 66.4% | 29.1 | 11.7 | 0.054 |
-| smollm2-4bit | **922** | **54.1** | 200.1 | **1,103** | 96.5% | 61.6% | 29.5 | 15.0 | **0.029** |
-| smollm2-8bit | 1,738 | 66.2 | 121.5 | 1,972 | 98.3% | 66.8% | 29.3 | 13.6 | 0.041 |
-| qwen-finetuned | 5,897 | 178.6 | 39.8 | 6,385 | **99.6%** | **69.0%** | 25.8 | 12.9 | 0.117 |
-| qwen-4bit | 1,667 | 131.4 | **122.8** | 1,833 | 98.3% | **68.6%** | 25.8 | 15.5 | 0.059 |
-| qwen-8bit | 3,138 | 152.0 | 72.3 | 3,412 | **99.6%** | **68.6%** | 25.7 | 14.1 | 0.080 |
-| llama-finetuned | 6,144 | 165.0 | 38.4 | 6,661 | 97.4% | 62.9% | 24.9 | 12.3 | 0.114 |
-| llama-4bit | 1,740 | 120.4 | **123.8** | 1,930 | 94.3% | 55.9% | 24.9 | 15.1 | 0.056 |
-| llama-8bit | 3,272 | 133.4 | 70.2 | 3,568 | 96.9% | 62.0% | 24.8 | 14.0 | 0.079 |
+| Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Slot F1 ↑ | Schema F1 ↑ | Output tokens | Power (W) | Energy/token (mWh) ↓ |
+|---------|----------:|----------:|----:|---------:|---------:|----------:|----------:|------------:|-------------:|----------:|-------------------:|
+| smollm2-finetuned | 3,268 | 74.8 | 72.1 | 3,608 | 98.3% | 66.4% | 83.6% | 83.3% | 29.1 | 11.7 | 0.054 |
+| smollm2-4bit | **922** | **54.1** | 200.1 | **1,103** | 96.5% | 61.6% | 79.4% | 79.4% | 29.5 | 15.0 | **0.029** |
+| smollm2-8bit | 1,738 | 66.2 | 121.5 | 1,972 | 98.3% | 66.8% | 83.8% | 83.5% | 29.3 | 13.6 | 0.041 |
+| qwen-finetuned | 5,897 | 178.6 | 39.8 | 6,385 | **99.6%** | **69.0%** | 83.7% | 83.7% | 25.8 | 12.9 | 0.117 |
+| qwen-4bit | 1,667 | 131.4 | **122.8** | 1,833 | 98.3% | **68.6%** | **83.8%** | **83.9%** | 25.8 | 15.5 | 0.059 |
+| qwen-8bit | 3,138 | 152.0 | 72.3 | 3,412 | **99.6%** | **68.6%** | 83.3% | 83.3% | 25.7 | 14.1 | 0.080 |
+| llama-finetuned | 6,144 | 165.0 | 38.4 | 6,661 | 97.4% | 62.9% | 79.0% | 78.9% | 24.9 | 12.3 | 0.114 |
+| llama-4bit | 1,740 | 120.4 | **123.8** | 1,930 | 94.3% | 55.9% | 74.1% | 73.7% | 24.9 | 15.1 | 0.056 |
+| llama-8bit | 3,272 | 133.4 | 70.2 | 3,568 | 96.9% | 62.0% | 78.5% | 78.5% | 24.8 | 14.0 | 0.079 |
 
-> **Note on latency:** All 9 variants meet the 200 ms TTFT target. SmolLM2 variants (54–75 ms) leave substantial headroom for a full STT → LLM → TTS pipeline. Qwen BF16 (179 ms) and Llama BF16 (165 ms) leave little margin and are better suited as BF16 reference baselines than production candidates.
+> **Note on latency:** All 9 variants meet the 200 ms TTFT target. However, for structured JSON output the TTS synthesizer cannot begin speaking until the full response is parsed — so the relevant deadline is TTFT + (output_tokens / TPS). Calculated end-to-end: smollm2-4bit ~202 ms, qwen-4bit ~342 ms, llama-4bit ~322 ms. **smollm2-4bit is the only variant where the complete response is ready within 200 ms.**
 >
 > **Note on benchmark vs interactive TTFT:** These numbers are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use, macOS throttles the GPU clock and spins down compute units during the pause while a user types or speaks. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT measured at 97–103 ms for smollm2-4bit across a range of car commands — well within the 200 ms automotive target and more representative of real driver use than the benchmark figure.
 
@@ -93,8 +93,6 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 **Two metrics are now reported per variant** (captured in `data/results/predictions/<variant>.jsonl`):
 - **Slot acc (exact-match)** — every key-value pair must match the ground truth exactly; any extra or missing key is a full failure. Strict but understates practical quality.
 - **Slot F1** — precision/recall/F1 at the key-value level, excluding None-valued ground truth slots. Two variants: raw model output vs ground truth (`slot_f1_pct`), and schema-filtered output vs ground truth (`slot_f1_filtered_pct`). Schema filtering removes slot keys the model generated that are not in the per-intent allowed key set.
-
-The table below reports the original exact-match figures. Slot F1 and schema-filtered F1 are available per-example in the prediction JSONL files; aggregated figures will be added when the comparison table is next regenerated.
 
 Slot accuracy uses exact-match scoring: every key-value pair in the predicted JSON must match the ground truth exactly. Any extra or missing key counts as a failure. This is strict by design but understates practical extraction quality — a model adding an extra plausible slot (e.g. `"brightness": 100` where the label has none) scores 0 despite being correct.
 
