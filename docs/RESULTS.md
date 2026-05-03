@@ -68,7 +68,7 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 - smollm2-4bit: 54.1 ms + (29.5 / 200.1 tok/s × 1000) = 54.1 + 147 ≈ **201 ms**
 - qwen-4bit: 131.4 ms + (25.8 / 122.8 × 1000) = 131.4 + 210 ≈ **341 ms**
 
-**Energy per token** (mWh) = (avg_power_W × generation_duration_s / 3600) × 1000 / output_tokens. Power is GPU + CPU combined via macOS `powermetrics`. Higher TPS compresses the generation window, so 4-bit variants spend less energy per token despite drawing more watts.
+**Energy per token** (mWh) = (avg_power_W × generation_duration_s / 3600) × 1000 / output_tokens. Power is GPU + CPU combined via macOS `powermetrics`. Higher TPS compresses the generation window, so 4-bit variants spend less energy per token despite drawing more watts. Note: `powermetrics` reports whole-system power draw — display, memory idle, and OS daemons are included, not inference alone. The figures are useful for relative comparison across variants on the same machine but overstate the true inference cost.
 - smollm2-4bit: 15.0 W × (29.5 / 200.1 s) / 3600 × 1000 / 29.5 ≈ **0.029 mWh/token**
 - smollm2-finetuned: 11.7 W × (29.1 / 72.1 s) / 3600 × 1000 / 29.1 ≈ **0.054 mWh/token**
 
