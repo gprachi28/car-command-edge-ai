@@ -62,6 +62,22 @@ All models quantized from fine-tuned BF16 using `mlx_lm convert -q`. Effective p
 >
 > **Note on benchmark vs interactive TTFT:** These numbers are measured back-to-back with no idle time between queries, which keeps Metal compute units fully active. In interactive use, macOS throttles the GPU clock and spins down compute units during the pause while a user types or speaks. The next query has to wait for them to ramp back up before the first token can be computed — adding ~50 ms. Interactive TTFT measured at 97–103 ms for smollm2-4bit across a range of car commands — well within the 200 ms automotive target and more representative of real driver use than the benchmark figure.
 
+### Metric definitions
+
+**Full generation latency** = TTFT + (output_tokens / TPS). TTFT measures time to first token; TPS measures generation throughput once the model is running. For this task the output must be fully parsed before it can be acted on, so both matter.
+- smollm2-4bit: 54.1 ms + (29.5 / 200.1 tok/s × 1000) = 54.1 + 147 ≈ **201 ms**
+- qwen-4bit: 131.4 ms + (25.8 / 122.8 × 1000) = 131.4 + 210 ≈ **341 ms**
+
+**Energy per token** (mWh) = (avg_power_W × generation_duration_s / 3600) × 1000 / output_tokens. Power is GPU + CPU combined via macOS `powermetrics`. Higher TPS compresses the generation window, so 4-bit variants spend less energy per token despite drawing more watts.
+- smollm2-4bit: 15.0 W × (29.5 / 200.1 s) / 3600 × 1000 / 29.5 ≈ **0.029 mWh/token**
+- smollm2-finetuned: 11.7 W × (29.1 / 72.1 s) / 3600 × 1000 / 29.1 ≈ **0.054 mWh/token**
+
+**Slot acc (exact-match)** — the full predicted slot dict must equal ground truth exactly; any extra or missing key scores 0. Strict but understates practical quality.
+
+**Slot F1** — precision/recall/F1 over the set of `key: value` pairs. Partial credit for getting most slots right even when the model adds an extra one. Example: ground truth `{"zone": "front", "mode": "cool"}`, model outputs `{"zone": "front", "mode": "cool", "fan_speed": 1}` → exact-match 0%, Slot F1 80%.
+
+**Schema F1** — same F1 calculation, but extra keys not in the per-intent allowed schema are stripped from the model output before scoring. Separates hallucinating a plausible-but-invalid key (penalised by Slot F1) from over-generating a valid key the label didn't include (not penalised by Schema F1). In these results the two numbers are close, meaning models mostly over-generate within-schema slots rather than confusing intent vocabularies.
+
 ---
 
 ## Key Insights
