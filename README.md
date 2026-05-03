@@ -50,13 +50,13 @@ generate_dataset.py   Ollama llama3.1:8b → 14 intents, ~1,200 utterances
 
 ## Key Results
 
-| Variant | Size (MB) | TTFT (ms) | RAM (MB) | Intent acc | Slot acc | Slot F1 | Energy/token |
-|---------|----------:|----------:|---------:|-----------:|---------:|--------:|-------------:|
-| **smollm2-4bit** | **922** | **54.1** | **1,103** | 96.5% | 61.6% | 79.4% | **0.029 mWh** |
-| smollm2-8bit | 1,738 | 66.2 | 1,972 | 98.3% | 66.8% | 83.8% | 0.041 mWh |
-| qwen-4bit | 1,667 | 131.4 | 1,833 | 98.3% | **68.6%** | **83.8%** | 0.059 mWh |
-| qwen-8bit | 3,138 | 152.0 | 3,412 | **99.6%** | **68.6%** | 83.3% | 0.080 mWh |
-| llama-4bit | 1,740 | 120.4 | 1,930 | 94.3% | 55.9% | 74.1% | 0.056 mWh |
+| Variant | Size (MB) | TTFT (ms) | RAM (MB) | Intent acc | Slot F1 | Energy/token |
+|---------|----------:|----------:|---------:|-----------:|--------:|-------------:|
+| **smollm2-4bit** | **922** | **54.1** | **1,103** | 96.5% | 79.4% | **0.029 mWh** |
+| smollm2-8bit | 1,738 | 66.2 | 1,972 | 98.3% | 83.8% | 0.041 mWh |
+| qwen-4bit | 1,667 | 131.4 | 1,833 | 98.3% | **83.8%** | 0.059 mWh |
+| qwen-8bit | 3,138 | 152.0 | 3,412 | **99.6%** | 83.3% | 0.080 mWh |
+| llama-4bit | 1,740 | 120.4 | 1,930 | 94.3% | 74.1% | 0.056 mWh |
 
 - **smollm2-4bit** is the best edge candidate: smallest (922 MB), fastest (54.1 ms TTFT), most energy-efficient (0.029 mWh/token), and the only variant that stays always-resident in an 8 GB cockpit SoC alongside OS and navigation. Intent accuracy 96.5%; add a JSON parse fallback (1.3% parse failure rate).
 - **Total response time — not TTFT — is what the TTS pipeline sees.** Calculated as TTFT + (output_tokens / TPS): smollm2-4bit ~202 ms, qwen-4bit ~342 ms, llama-4bit ~322 ms. smollm2-4bit's 200.1 TPS is what keeps it within the 200 ms automotive target end-to-end.
