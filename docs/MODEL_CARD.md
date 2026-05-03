@@ -117,19 +117,19 @@ Compression ratios are near-identical across all three models.
 
 Evaluated on 229 examples (231-example stratified 20% hold-out, 14 intent classes; 2 warmup examples discarded). Hardware: Apple M4 Pro.
 
-| Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Power (W) | Energy/token (mWh) ↓ |
-|---------|----------:|----------:|----:|---------:|---------:|----------:|----------:|-------------------:|
-| smollm2-finetuned | 3,268 | 74.8 | 72.1 | 3,608 | 98.3% | 66.4% | 11.7 | 0.054 |
-| smollm2-4bit | **922** | **54.1** | 200.1 | **1,103** | 96.5% | 61.6% | 15.0 | **0.029** |
-| smollm2-8bit | 1,738 | 66.2 | 121.5 | 1,972 | 98.3% | 66.8% | 13.6 | 0.041 |
-| qwen-finetuned | 5,897 | 178.6 | 39.8 | 6,385 | **99.6%** | **69.0%** | 12.9 | 0.117 |
-| qwen-4bit | 1,667 | 131.4 | **122.8** | 1,833 | 98.3% | **68.6%** | 15.5 | 0.059 |
-| qwen-8bit | 3,138 | 152.0 | 72.3 | 3,412 | **99.6%** | **68.6%** | 14.1 | 0.080 |
-| llama-finetuned | 6,144 | 165.0 | 38.4 | 6,661 | 97.4% | 62.9% | **12.3** | 0.114 |
-| llama-4bit | 1,740 | 120.4 | **123.8** | 1,930 | 94.3% | 55.9% | 15.1 | 0.056 |
-| llama-8bit | 3,272 | 133.4 | 70.2 | 3,568 | 96.9% | 62.0% | 14.0 | 0.079 |
+| Variant | Size (MB) ↓ | TTFT (ms) ↓ | TPS ↑ | RAM (MB) ↓ | Intent acc ↑ | Slot acc ↑ | Slot F1 ↑ | Schema F1 ↑ | Power (W) | Energy/token (mWh) ↓ |
+|---------|----------:|----------:|----:|---------:|---------:|----------:|----------:|------------:|----------:|-------------------:|
+| smollm2-finetuned | 3,268 | 74.8 | 72.1 | 3,608 | 98.3% | 66.4% | 83.6% | 83.3% | 11.7 | 0.054 |
+| smollm2-4bit | **922** | **54.1** | 200.1 | **1,103** | 96.5% | 61.6% | 79.4% | 79.4% | 15.0 | **0.029** |
+| smollm2-8bit | 1,738 | 66.2 | 121.5 | 1,972 | 98.3% | 66.8% | 83.8% | 83.5% | 13.6 | 0.041 |
+| qwen-finetuned | 5,897 | 178.6 | 39.8 | 6,385 | **99.6%** | **69.0%** | 83.7% | 83.7% | 12.9 | 0.117 |
+| qwen-4bit | 1,667 | 131.4 | **122.8** | 1,833 | 98.3% | **68.6%** | **83.8%** | **83.9%** | 15.5 | 0.059 |
+| qwen-8bit | 3,138 | 152.0 | 72.3 | 3,412 | **99.6%** | **68.6%** | 83.3% | 83.3% | 14.1 | 0.080 |
+| llama-finetuned | 6,144 | 165.0 | 38.4 | 6,661 | 97.4% | 62.9% | 79.0% | 78.9% | **12.3** | 0.114 |
+| llama-4bit | 1,740 | 120.4 | **123.8** | 1,930 | 94.3% | 55.9% | 74.1% | 73.7% | 15.1 | 0.056 |
+| llama-8bit | 3,272 | 133.4 | 70.2 | 3,568 | 96.9% | 62.0% | 78.5% | 78.5% | 14.0 | 0.079 |
 
-> **Note on latency:** All 9 variants meet the 200 ms TTFT target. SmolLM2 variants (54–75 ms) leave substantial headroom for a full voice pipeline (STT → LLM → TTS). Qwen BF16 (179 ms) and Llama BF16 (165 ms) leave little margin and are better used as BF16 reference baselines.
+> **Note on latency:** All 9 variants meet the 200 ms TTFT target. However, the TTS synthesizer cannot begin speaking until the full JSON is parsed — so the relevant deadline is TTFT + (output_tokens / TPS). Calculated end-to-end: smollm2-4bit ~202 ms, qwen-4bit ~342 ms, llama-4bit ~322 ms. **smollm2-4bit is the only variant where the complete response is ready within 200 ms.**
 
 ---
 
