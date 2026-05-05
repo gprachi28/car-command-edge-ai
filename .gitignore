@@ -1,6 +1,8 @@
 # Data — never commit raw/processed data or large model files
 data/raw/
-data/processed/
+data/processed/*
+!data/processed/metadata.json
+!data/processed/test.jsonl
 *.pt
 *.pth
 *.ckpt
