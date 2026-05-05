@@ -1,0 +1,79 @@
+{
+  "total": 1571,
+  "train": 1252,
+  "test": 319,
+  "intents": 14,
+  "avg_utterance_words": 6.9,
+  "intent_distribution": {
+    "navigate": {
+      "train": 103,
+      "test": 26,
+      "total": 129
+    },
+    "safety_assist": {
+      "train": 68,
+      "test": 18,
+      "total": 86
+    },
+    "seat_control": {
+      "train": 102,
+      "test": 26,
+      "total": 128
+    },
+    "drive_mode": {
+      "train": 73,
+      "test": 19,
+      "total": 92
+    },
+    "set_climate": {
+      "train": 103,
+      "test": 26,
+      "total": 129
+    },
+    "window_control": {
+      "train": 95,
+      "test": 24,
+      "total": 119
+    },
+    "set_lighting": {
+      "train": 103,
+      "test": 26,
+      "total": 129
+    },
+    "vehicle_info": {
+      "train": 76,
+      "test": 20,
+      "total": 96
+    },
+    "adjust_volume": {
+      "train": 92,
+      "test": 23,
+      "total": 115
+    },
+    "cruise_control": {
+      "train": 93,
+      "test": 24,
+      "total": 117
+    },
+    "read_message": {
+      "train": 79,
+      "test": 20,
+      "total": 99
+    },
+    "play_media": {
+      "train": 95,
+      "test": 24,
+      "total": 119
+    },
+    "call_contact": {
+      "train": 78,
+      "test": 20,
+      "total": 98
+    },
+    "connectivity": {
+      "train": 92,
+      "test": 23,
+      "total": 115
+    }
+  }
+}

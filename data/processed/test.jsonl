@@ -1,0 +1,231 @@
+{"text": "Command: Check my oil level\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"oil_level\"}}"}
+{"text": "Command: Let some air in through the rear left vent\nAction: {\"intent\": \"window_control\", \"slots\": {\"action\": \"vent\", \"window\": \"rear_left\"}}"}
+{"text": "Command: Front zone to cool mode, set temperature to 20 celsius, fan on low\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"front\", \"temperature\": 20, \"mode\": \"cool\", \"fan_speed\": 1}}"}
+{"text": "Command: Drive efficiently\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"eco\"}}"}
+{"text": "Command: Boost the volume by ten\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"step\": 10}}"}
+{"text": "Command: Passenger seat heat mode, max fan speed on 75 fahrenheit\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"passenger\", \"temperature\": 75, \"mode\": \"heat\", \"fan_speed\": 5}}"}
+{"text": "Command: Cool it down to 22 degrees Celsius\nAction: {\"intent\": \"set_climate\", \"slots\": {\"temperature\": 22, \"mode\": \"cool\", \"unit\": \"celsius\"}}"}
+{"text": "Command: Turn up heat to medium on rear seats\nAction: {\"intent\": \"seat_control\", \"slots\": {\"heat\": \"medium\", \"seat\": \"rear\"}}"}
+{"text": "Command: Raise the volume to 80\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"level\": 80, \"direction\": \"up\"}}"}
+{"text": "Command: Contact Tom at work\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Tom\", \"contact_type\": \"work\"}}"}
+{"text": "Command: Heat up the driver's seat\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"driver\", \"heat\": \"up\"}}"}
+{"text": "Command: Call Emily on her mobile phone now\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Emily\", \"contact_type\": \"mobile\"}}"}
+{"text": "Command: Set driver zone to 20 fahrenheit in cool mode, low fan\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"driver\", \"temperature\": 20, \"mode\": \"cool\", \"unit\": \"fahrenheit\", \"fan_speed\": 1}}"}
+{"text": "Command: Cool down the driver side zone quickly\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"driver\", \"mode\": \"cool\"}}"}
+{"text": "Command: Close my sunroof\nAction: {\"intent\": \"window_control\", \"slots\": {\"action\": \"close\", \"window\": \"sunroof\"}}"}
+{"text": "Command: Mute please\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"mute\"}}"}
+{"text": "Command: Turn on sport mode, accelerate!\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"sport\"}}"}
+{"text": "Command: Resume cruise control at 100 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"resume\", \"speed\": 100, \"unit\": \"kph\"}}"}
+{"text": "Command: Increase the volume by 10\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"step\": 10}}"}
+{"text": "Command: Turn it down slowly\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"down\"}}"}
+{"text": "Command: Passenger seat forward please\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"passenger\", \"adjustment\": \"forward\"}}"}
+{"text": "Command: Set speed to 85 mph with far gap\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"set\", \"speed\": 85, \"unit\": \"mph\", \"gap\": \"far\"}}"}
+{"text": "Command: Show battery level\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"battery\"}}"}
+{"text": "Command: Memory 2 for passenger\nAction: {\"intent\": \"seat_control\", \"slots\": {\"memory\": \"2\", \"seat\": \"passenger\"}}"}
+{"text": "Command: Check email messages from work\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"work\", \"message_type\": \"email\"}}"}
+{"text": "Command: Bluetooth, play this song\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"bluetooth\", \"query\": \"this song\"}}"}
+{"text": "Command: Current tire pressure\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"tire_pressure\"}}"}
+{"text": "Command: Play the song 'Happy' by Pharrell Williams on Apple Music\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"apple_music\", \"query\": \"Happy\", \"artist\": \"Pharrell Williams\"}}"}
+{"text": "Command: Go into offroad mode, please\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"offroad\"}}"}
+{"text": "Command: Take a 30-minute detour at the next gas station\nAction: {\"intent\": \"navigate\", \"slots\": {\"waypoint\": \"next gas station\", \"arrival_time\": \"in 30 minutes\"}}"}
+{"text": "Command: Get my car's temperature reading\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"temperature\"}}"}
+{"text": "Command: Reading lights, full brightness and red color\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"reading\", \"brightness\": 100, \"color\": \"red\"}}"}
+{"text": "Command: Half open rear left\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"rear_left\", \"percentage\": 50}}"}
+{"text": "Command: Route to 456 Elm Street with the scenic route, stop by coffee shop\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination\": \"456 Elm Street\", \"waypoint\": \"coffee shop\", \"route_preference\": \"scenic\"}}"}
+{"text": "Command: Ring my dad on the home phone\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"dad\", \"contact_type\": \"home\"}}"}
+{"text": "Command: Increase sound level by a quarter\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"step\": 25}}"}
+{"text": "Command: Dim dashboard lights to 30 percent\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"dashboard\", \"brightness\": 30, \"mode\": \"dim\"}}"}
+{"text": "Command: Get in touch with my sister\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"sister\"}}"}
+{"text": "Command: Crack passenger side\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"passenger\", \"action\": \"crack\"}}"}
+{"text": "Command: Open passenger window a bit\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"passenger\", \"action\": \"open\", \"percentage\": 25}}"}
+{"text": "Command: Put in sport\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"sport\"}}"}
+{"text": "Command: Disable parking sensors please\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"parking_sensors\", \"action\": \"disable\"}}"}
+{"text": "Command: Turn ambient lights to full\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"ambient\", \"mode\": \"full\"}}"}
+{"text": "Command: Set zone to cool mode, driver temperature at 21\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"driver\", \"temperature\": 21, \"mode\": \"cool\"}}"}
+{"text": "Command: Speed limiter on please\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"speed_limiter\", \"action\": \"enable\"}}"}
+{"text": "Command: Contact Sarah on her mobile\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Sarah\", \"contact_type\": \"mobile\"}}"}
+{"text": "Command: Vent all windows to 20 percent\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"all\", \"action\": \"vent\", \"percentage\": 20}}"}
+{"text": "Command: Close the rear passenger window\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"rear_passenger\", \"action\": \"close\"}}"}
+{"text": "Command: Take me home by 10am, stop at Starbucks on the way\nAction: {\"intent\": \"navigate\", \"slots\": {\"arrival_time\": \"10am\", \"waypoint\": \"Starbucks\", \"destination_type\": \"home\"}}"}
+{"text": "Command: Adjust rear seat heating to medium\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"rear\", \"heat\": \"medium\"}}"}
+{"text": "Command: Set the car to normal drive mode\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"normal\"}}"}
+{"text": "Command: Call me Mike on my home number\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Mike\", \"contact_type\": \"home\"}}"}
+{"text": "Command: Connect to my Android device via Wi-Fi\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"wifi\", \"action\": \"connect\", \"device_name\": \"my Android device\"}}"}
+{"text": "Command: View fuel gauge\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"fuel\"}}"}
+{"text": "Command: Contact Dad now\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Dad\"}}"}
+{"text": "Command: Rear right seat recline and memory preset 2\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"rear_right\", \"adjustment\": \"recline\", \"memory\": 2}}"}
+{"text": "Command: Set reading light to 50 percent\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"reading\", \"brightness\": 50}}"}
+{"text": "Command: Vent the rear left window a bit\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"rear_left\", \"action\": \"vent\"}}"}
+{"text": "Command: Raise volume level slightly\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"step\": 5}}"}
+{"text": "Command: Display all WhatsApp messages\nAction: {\"intent\": \"read_message\", \"slots\": {\"message_type\": \"whatsapp\"}}"}
+{"text": "Command: Turn off Hotspot\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"hotspot\", \"action\": \"disable\"}}"}
+{"text": "Command: Front seat needs cool at 22 celsius in auto fan mode\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"front\", \"temperature\": 22, \"mode\": \"auto\", \"unit\": \"celsius\"}}"}
+{"text": "Command: See temperature inside car\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"temperature\"}}"}
+{"text": "Command: Enable driver alert feature\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"action\": \"enable\", \"feature\": \"driver_alert\"}}"}
+{"text": "Command: Disable parking sensors now\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"parking_sensors\", \"action\": \"disable\"}}"}
+{"text": "Command: Dim the dashboard lights to red\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"dashboard\", \"color\": \"red\", \"mode\": \"dim\"}}"}
+{"text": "Command: Turn off the comfort feature\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"offroad\"}}"}
+{"text": "Command: Lower temperature to 20\nAction: {\"intent\": \"set_climate\", \"slots\": {\"mode\": \"cool\", \"temperature\": 20}}"}
+{"text": "Command: Adjust air conditioner on rear zone to auto mode\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"rear\", \"mode\": \"auto\"}}"}
+{"text": "Command: Turn off ambient lighting\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"mode\": \"off\", \"zone\": \"ambient\"}}"}
+{"text": "Command: Increase volume ten\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"step\": 10}}"}
+{"text": "Command: Get in touch with Rachel at work\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Rachel\", \"contact_type\": \"work\"}}"}
+{"text": "Command: Engage eco mode\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"eco\"}}"}
+{"text": "Command: Set footwell lights to red at 50% and night mode\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"footwell\", \"color\": \"red\", \"brightness\": 50, \"mode\": \"night\"}}"}
+{"text": "Command: Disconnect Android Auto from Honda Civic\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"android_auto\", \"action\": \"disconnect\", \"device_name\": \"Honda Civic\"}}"}
+{"text": "Command: Adjust rear left seat recline a bit\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"rear_left\", \"adjustment\": \"recline\"}}"}
+{"text": "Command: Turn reading light off\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"reading\", \"mode\": \"off\"}}"}
+{"text": "Command: Tell me the current mileage\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"mileage\"}}"}
+{"text": "Command: Play hip hop on Spotify\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"spotify\", \"genre\": \"hip hop\"}}"}
+{"text": "Command: Adjust driver's seat recline and lumbar to 3\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"driver\", \"adjustment\": \"recline\", \"lumbar\": 3}}"}
+{"text": "Command: Play Spotify\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"spotify\"}}"}
+{"text": "Command: Take me to work by 9am\nAction: {\"intent\": \"navigate\", \"slots\": {\"arrival_time\": \"9am\", \"destination_type\": \"work\"}}"}
+{"text": "Command: Increase cruise speed to 105 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"increase\", \"speed\": 105, \"unit\": \"kph\"}}"}
+{"text": "Command: Battery status\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"battery\"}}"}
+{"text": "Command: Lane assist is disabled\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"lane_assist\", \"action\": \"disable\"}}"}
+{"text": "Command: Disable Android Auto\nAction: {\"intent\": \"connectivity\", \"slots\": {\"action\": \"disable\", \"feature\": \"android_auto\"}}"}
+{"text": "Command: Half close the rear left window\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"rear_left\", \"action\": \"half\"}}"}
+{"text": "Command: Turn off AC in the passenger seat\nAction: {\"intent\": \"set_climate\", \"slots\": {\"mode\": \"off\", \"zone\": \"passenger\"}}"}
+{"text": "Command: Turn up fan in rear zone to 75 fahrenheit\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"rear\", \"temperature\": 75, \"unit\": \"fahrenheit\", \"fan_speed\": 3}}"}
+{"text": "Command: Play some jazz music by Miles Davis on Spotify\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"spotify\", \"genre\": \"jazz\", \"artist\": \"Miles Davis\"}}"}
+{"text": "Command: Recline the seat\nAction: {\"intent\": \"seat_control\", \"slots\": {\"adjustment\": \"recline\"}}"}
+{"text": "Command: Stream my podcast 'The Daily' on Apple Music\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"apple_music\", \"query\": \"The Daily podcast\"}}"}
+{"text": "Command: Pair with my friend's phone via Bluetooth\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"bluetooth\", \"action\": \"pair\", \"device_name\": \"friend's phone\"}}"}
+{"text": "Command: 99.5 FM, play some rock music\nAction: {\"intent\": \"play_media\", \"slots\": {\"station\": \"99.5 FM\", \"genre\": \"rock\"}}"}
+{"text": "Command: Put the car in comfort driving mode\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"comfort\"}}"}
+{"text": "Command: Read text message from home\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"home\", \"message_type\": \"text\"}}"}
+{"text": "Command: Read my WhatsApp messages\nAction: {\"intent\": \"read_message\", \"slots\": {\"message_type\": \"whatsapp\"}}"}
+{"text": "Command: Play Spotify, 'Stairway to Heaven'\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"spotify\", \"query\": \"'Stairway to Heaven'\"}}"}
+{"text": "Command: Cruise on at 75 mph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"enable\", \"speed\": 75, \"unit\": \"mph\"}}"}
+{"text": "Command: Put on KISS 108\nAction: {\"intent\": \"play_media\", \"slots\": {\"station\": \"KISS 108\", \"source\": \"radio\"}}"}
+{"text": "Command: Increase ambient brightness\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"ambient\", \"brightness\": 10}}"}
+{"text": "Command: Passenger seat to auto mode, medium speed\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"passenger\", \"mode\": \"auto\", \"fan_speed\": 3}}"}
+{"text": "Command: Set interior lighting to 50 percent blue\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"interior\", \"brightness\": 50, \"color\": \"blue\"}}"}
+{"text": "Command: Stream NPR podcast\nAction: {\"intent\": \"play_media\", \"slots\": {\"query\": \"NPR podcast\", \"source\": \"podcast\"}}"}
+{"text": "Command: Increase speed to 80 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"increase\", \"speed\": 80, \"unit\": \"kph\"}}"}
+{"text": "Command: Monitor my speed\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"speed\"}}"}
+{"text": "Command: Connect to the nearest Wi-Fi network\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"wifi\", \"action\": \"connect\"}}"}
+{"text": "Command: Ring Susan at home\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_type\": \"home\", \"contact_name\": \"Susan\"}}"}
+{"text": "Command: Disable dashboard lights\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"mode\": \"off\"}}"}
+{"text": "Command: Set speed to 85 mph with close gap\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"set\", \"speed\": 85, \"unit\": \"mph\", \"gap\": \"close\"}}"}
+{"text": "Command: Take the highway to 789 Oak Street in 45 minutes.\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination\": \"789 Oak Street\", \"arrival_time\": \"45 minutes\", \"route_preference\": \"fastest\"}}"}
+{"text": "Command: Turn on cruise control\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"enable\"}}"}
+{"text": "Command: Rear zone set to heat at 74 celsius\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"rear\", \"temperature\": 74, \"mode\": \"heat\"}}"}
+{"text": "Command: Open the sunroof to 30 percent\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"sunroof\", \"action\": \"open\", \"percentage\": 30}}"}
+{"text": "Command: Heat rear seats high\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"rear_right\", \"heat\": \"high\"}}"}
+{"text": "Command: Enable parking sensors now\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"parking_sensors\"}}"}
+{"text": "Command: Ring David's home number\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"David\", \"contact_type\": \"home\"}}"}
+{"text": "Command: Check my fuel and oil levels\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"oil_level\"}}"}
+{"text": "Command: Get directions to the nearest airport by evening\nAction: {\"intent\": \"navigate\", \"slots\": {\"arrival_time\": \"evening\", \"destination_type\": \"airport\"}}"}
+{"text": "Command: Turn down the volume\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"down\"}}"}
+{"text": "Command: Decrease speed to 80 mph with close gap\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"decrease\", \"speed\": 80, \"unit\": \"mph\", \"gap\": \"close\"}}"}
+{"text": "Command: Adjust driver seat forward, increase heat to high lumbar 3\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"driver\", \"adjustment\": \"forward\", \"heat\": \"high\", \"lumbar\": 3}}"}
+{"text": "Command: Get to the hospital in 20 minutes, avoid highways\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"hospital\", \"arrival_time\": \"in 20 minutes\", \"route_preference\": \"avoid_highways\"}}"}
+{"text": "Command: Navigate to the nearest gas station\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"gas_station\"}}"}
+{"text": "Command: Rear right seat up and set memory preset 1\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"rear_right\", \"adjustment\": \"up\", \"memory\": 1}}"}
+{"text": "Command: Temp display\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"temperature\"}}"}
+{"text": "Command: Limiter speed on please\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"speed_limiter\", \"action\": \"enable\"}}"}
+{"text": "Command: Call Emily on her mobile number\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Emily\", \"contact_type\": \"mobile\"}}"}
+{"text": "Command: Set rear passenger to 80 fahrenheit on max fan\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"rear passenger\", \"temperature\": 80, \"unit\": \"fahrenheit\", \"fan_speed\": 5}}"}
+{"text": "Command: Resume at 90 mph, close the gap.\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"speed\": 90, \"unit\": \"mph\", \"action\": \"resume\", \"gap\": \"close\"}}"}
+{"text": "Command: Ventilate the car\nAction: {\"intent\": \"window_control\", \"slots\": {\"action\": \"vent\", \"window\": \"all\"}}"}
+{"text": "Command: Connect iPhone to Bluetooth\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"bluetooth\", \"action\": \"connect\", \"device_name\": \"iPhone\"}}"}
+{"text": "Command: Move passenger seat up and set heat to low\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"passenger\", \"adjustment\": \"up\", \"heat\": \"low\"}}"}
+{"text": "Command: Check text messages\nAction: {\"intent\": \"read_message\", \"slots\": {\"message_type\": \"text\"}}"}
+{"text": "Command: Play back call recording with Alex\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"Alex\", \"message_type\": \"call_recording\"}}"}
+{"text": "Command: Lane assist enabled\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"lane_assist\", \"action\": \"status\"}}"}
+{"text": "Command: Disable Bluetooth on my phone\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"bluetooth\", \"action\": \"disable\", \"device_name\": \"my phone\"}}"}
+{"text": "Command: Text messages only\nAction: {\"intent\": \"read_message\", \"slots\": {\"message_type\": \"text\"}}"}
+{"text": "Command: Connect to CarPlay\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"carplay\", \"action\": \"connect\"}}"}
+{"text": "Command: Read WhatsApp message from John\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"John\", \"message_type\": \"whatsapp\"}}"}
+{"text": "Command: Get me to work by 8am, no tolls on the way\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"work\", \"arrival_time\": \"8am\", \"route_preference\": \"avoid_tolls\"}}"}
+{"text": "Command: Play the voicemail from work\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"work\", \"message_type\": \"voicemail\"}}"}
+{"text": "Command: Decrease by 8\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"down\", \"step\": 8}}"}
+{"text": "Command: Bring up the volume by twenty\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"step\": 20}}"}
+{"text": "Command: Resume cruise control at 90 mph with medium following distance\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"resume\", \"speed\": 90, \"unit\": \"mph\", \"gap\": \"medium\"}}"}
+{"text": "Command: Half open sunroof\nAction: {\"intent\": \"window_control\", \"slots\": {\"percentage\": 50, \"window\": \"sunroof\"}}"}
+{"text": "Command: Show me tire pressure now\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"tire_pressure\"}}"}
+{"text": "Command: Put on alternative from Apple Music by Foo Fighters\nAction: {\"intent\": \"play_media\", \"slots\": {\"genre\": \"alternative\", \"artist\": \"Foo Fighters\", \"source\": \"apple_music\"}}"}
+{"text": "Command: Sport mode enabled\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"sport\"}}"}
+{"text": "Command: Play the email from Karen\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"Karen\", \"message_type\": \"email\"}}"}
+{"text": "Command: Get me to 456 Elm Street by 7pm, avoid highways\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination\": \"456 Elm Street\", \"arrival_time\": \"7pm\", \"route_preference\": \"avoid_highways\"}}"}
+{"text": "Command: Disable hotspot\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"hotspot\", \"action\": \"disable\"}}"}
+{"text": "Command: Open all windows to 50%\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"all\", \"action\": \"open\", \"percentage\": 50}}"}
+{"text": "Command: Normal driving please\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"normal\"}}"}
+{"text": "Command: Find out range of battery\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"range\"}}"}
+{"text": "Command: Connect my iPhone to carplay\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"carplay\", \"action\": \"connect\", \"device_name\": \"iPhone\"}}"}
+{"text": "Command: Put it in track mode\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"track\"}}"}
+{"text": "Command: Get oil level check\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"oil_level\"}}"}
+{"text": "Command: Close gap and set speed to 110 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"set\", \"speed\": 110, \"unit\": \"kph\", \"gap\": \"close\"}}"}
+{"text": "Command: Turn off traction control, go to snow mode\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"snow\"}}"}
+{"text": "Command: Give me range\nAction: {\"intent\": \"vehicle_info\", \"slots\": {\"query_type\": \"range\"}}"}
+{"text": "Command: Play the text from Sarah\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"Sarah\", \"message_type\": \"text\"}}"}
+{"text": "Command: Listen to WhatsApp message from boss\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"boss\", \"message_type\": \"whatsapp\"}}"}
+{"text": "Command: Switch footwell lights to full brightness\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"footwell\", \"mode\": \"full\"}}"}
+{"text": "Command: Decrease speed to 45 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"decrease\", \"speed\": 45, \"unit\": \"kph\"}}"}
+{"text": "Command: Switch to snow\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"snow\"}}"}
+{"text": "Command: Enable parking sensors\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"parking_sensors\", \"action\": \"enable\"}}"}
+{"text": "Command: Tell Emily to call me\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Emily\"}}"}
+{"text": "Command: Move driver's seat up a notch\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"driver\", \"adjustment\": \"up\"}}"}
+{"text": "Command: Play country music on Spotify\nAction: {\"intent\": \"play_media\", \"slots\": {\"genre\": \"country\", \"source\": \"spotify\"}}"}
+{"text": "Command: Play Spotify jazz by Miles Davis\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"spotify\", \"genre\": \"jazz\", \"artist\": \"Miles Davis\"}}"}
+{"text": "Command: Increase speed to 130 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"increase\", \"speed\": 130, \"unit\": \"kph\"}}"}
+{"text": "Command: Pair my phone with the car's NFC\nAction: {\"intent\": \"connectivity\", \"slots\": {\"action\": \"pair\", \"feature\": \"nfc\"}}"}
+{"text": "Command: Set front zone to 20 celsius cool mode fan on 3\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"front\", \"temperature\": 20, \"mode\": \"cool\", \"fan_speed\": 3}}"}
+{"text": "Command: Stream that new Billie Eilish song\nAction: {\"intent\": \"play_media\", \"slots\": {\"query\": \"Billie Eilish's latest song\", \"source\": \"spotify\"}}"}
+{"text": "Command: Call Rachel work\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Rachel\", \"contact_type\": \"work\"}}"}
+{"text": "Command: Apple Music, Radiohead album\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"apple_music\", \"query\": \"Radiohead album\"}}"}
+{"text": "Command: Read email from Michael\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"Michael\", \"message_type\": \"email\"}}"}
+{"text": "Command: Get me to work via the highway in 30 minutes\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"work\", \"arrival_time\": \"30 minutes\", \"route_preference\": \"avoid_highways\"}}"}
+{"text": "Command: Drive in sport mode\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"sport\"}}"}
+{"text": "Command: Increase heat to high for passenger seat\nAction: {\"intent\": \"seat_control\", \"slots\": {\"heat\": \"high\", \"seat\": \"passenger\"}}"}
+{"text": "Command: Switch to snow mode\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"snow\"}}"}
+{"text": "Command: Find the shortest route home\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"home\", \"route_preference\": \"fastest\"}}"}
+{"text": "Command: Drive me to work in 30 minutes, take the tolls\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"work\", \"arrival_time\": \"in 30 minutes\", \"route_preference\": \"avoid_tolls\"}}"}
+{"text": "Command: Take me home now\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"home\"}}"}
+{"text": "Command: Adjust passenger seat up and increase heat to high lumbar 1\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"passenger\", \"adjustment\": \"up\", \"heat\": \"high\", \"lumbar\": 1}}"}
+{"text": "Command: Enable cruise control at 60 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"enable\", \"speed\": 60, \"unit\": \"kph\"}}"}
+{"text": "Command: Read Chris' text message\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"Chris\", \"message_type\": \"text\"}}"}
+{"text": "Command: Put on 95.5 radio station\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"radio\", \"station\": \"95.5\"}}"}
+{"text": "Command: Ring John at work today\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"John\", \"contact_type\": \"work\"}}"}
+{"text": "Command: Turn on reading lights in full color mode\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"reading\", \"color\": \"full\", \"mode\": \"on\"}}"}
+{"text": "Command: Half close rear left window\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"rear_left\", \"action\": \"half\"}}"}
+{"text": "Command: Play back voicemail from mom\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"mom\", \"message_type\": \"voicemail\"}}"}
+{"text": "Command: Ambient lighting on full power and full brightness\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"ambient\", \"mode\": \"on\", \"brightness\": 100}}"}
+{"text": "Command: Cabin reading mode with green lighting\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"cabin\", \"color\": \"green\", \"mode\": \"reading\"}}"}
+{"text": "Command: Drive me to work in 20 minutes, avoiding tolls\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"work\", \"arrival_time\": \"in 20 minutes\", \"route_preference\": \"avoid_tolls\"}}"}
+{"text": "Command: Connect to my friend's hotspot via WiFi\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"wifi\", \"action\": \"connect\", \"device_name\": \"friend's hotspot\"}}"}
+{"text": "Command: Bring up the sound to 75\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"level\": 75}}"}
+{"text": "Command: Increase speed to 105 kph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"increase\", \"speed\": 105, \"unit\": \"kph\"}}"}
+{"text": "Command: Speed up to 70 mph\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"speed\": 70, \"unit\": \"mph\"}}"}
+{"text": "Command: Put rear left seat in recline position with high heat\nAction: {\"intent\": \"seat_control\", \"slots\": {\"heat\": \"high\", \"seat\": \"rear_left\", \"adjustment\": \"recline\"}}"}
+{"text": "Command: I want to know speed limiter status\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"speed_limiter\", \"action\": \"status\"}}"}
+{"text": "Command: Turn off auto on passenger side\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"passenger\", \"mode\": \"auto\"}}"}
+{"text": "Command: Take me to the park\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination\": \"the park\"}}"}
+{"text": "Command: Increase reading light brightness to 75\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"reading\", \"brightness\": 75}}"}
+{"text": "Command: Cabin to dim mode with blue lighting\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"cabin\", \"mode\": \"dim\", \"color\": \"blue\"}}"}
+{"text": "Command: Get in touch with Emily\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"Emily\"}}"}
+{"text": "Command: USB, play this podcast\nAction: {\"intent\": \"play_media\", \"slots\": {\"source\": \"usb\", \"query\": \"this podcast\"}}"}
+{"text": "Command: Increase to 95\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"level\": 95}}"}
+{"text": "Command: Switch offroad mode on\nAction: {\"intent\": \"drive_mode\", \"slots\": {\"mode\": \"offroad\"}}"}
+{"text": "Command: Set cruise control to 80 mph with a close gap\nAction: {\"intent\": \"cruise_control\", \"slots\": {\"action\": \"set\", \"speed\": 80, \"unit\": \"mph\", \"gap\": \"close\"}}"}
+{"text": "Command: Get to my house on the fastest route\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination_type\": \"home\", \"route_preference\": \"fastest\"}}"}
+{"text": "Command: Pair my Samsung via NFC\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"nfc\", \"action\": \"pair\", \"device_name\": \"Samsung\"}}"}
+{"text": "Command: Take me to John's house\nAction: {\"intent\": \"navigate\", \"slots\": {\"destination\": \"John's house\"}}"}
+{"text": "Command: Collision warning, on\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"collision_warning\", \"action\": \"enable\"}}"}
+{"text": "Command: Open the passenger window to half\nAction: {\"intent\": \"window_control\", \"slots\": {\"window\": \"passenger\", \"action\": \"half\"}}"}
+{"text": "Command: Decrease volume by 15\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"down\", \"step\": 15}}"}
+{"text": "Command: Lower by 10%\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"down\", \"step\": 10}}"}
+{"text": "Command: Ventilate rear passenger window\nAction: {\"intent\": \"window_control\", \"slots\": {\"action\": \"vent\", \"window\": \"passenger\"}}"}
+{"text": "Command: Listen to my email from work\nAction: {\"intent\": \"read_message\", \"slots\": {\"contact_name\": \"work\", \"message_type\": \"email\"}}"}
+{"text": "Command: Set driver seat upright, adjust heat to low lumbar 1\nAction: {\"intent\": \"seat_control\", \"slots\": {\"seat\": \"driver\", \"adjustment\": \"upright\", \"heat\": \"low\", \"lumbar\": 1}}"}
+{"text": "Command: Disconnect from my car's hotspot\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"hotspot\", \"action\": \"disconnect\"}}"}
+{"text": "Command: Driver zone temperature at 23 celsius in cool mode\nAction: {\"intent\": \"set_climate\", \"slots\": {\"zone\": \"driver\", \"temperature\": 23, \"mode\": \"cool\"}}"}
+{"text": "Command: Pair Samsung Galaxy with the car\nAction: {\"intent\": \"connectivity\", \"slots\": {\"feature\": \"nfc\", \"action\": \"pair\", \"device_name\": \"Samsung Galaxy\"}}"}
+{"text": "Command: Raise the volume to 60\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"level\": 60}}"}
+{"text": "Command: Bring the volume down to zero\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"down\", \"level\": 0}}"}
+{"text": "Command: Increase by 10\nAction: {\"intent\": \"adjust_volume\", \"slots\": {\"direction\": \"up\", \"step\": 10}}"}
+{"text": "Command: Call John at work right now\nAction: {\"intent\": \"call_contact\", \"slots\": {\"contact_name\": \"John\", \"contact_type\": \"work\"}}"}
+{"text": "Command: Enable lane assist now\nAction: {\"intent\": \"safety_assist\", \"slots\": {\"feature\": \"lane_assist\", \"action\": \"enable\"}}"}
+{"text": "Command: Put dashboard in night mode\nAction: {\"intent\": \"set_lighting\", \"slots\": {\"zone\": \"dashboard\", \"mode\": \"night\"}}"}
+{"text": "Command: Increase fan speed\nAction: {\"intent\": \"set_climate\", \"slots\": {\"fan_speed\": 4}}"}
