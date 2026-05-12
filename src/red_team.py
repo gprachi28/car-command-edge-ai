@@ -217,3 +217,129 @@ def _pass_for_case(case: dict, pred_intent: str | None, parse_failed: bool) -> b
     if category == "adversarial":
         return not parse_failed and pred_intent in SCHEMA_INTENTS
     return False
+
+
+MAX_TOKENS = 150
+_COOLDOWN_S = 5  # sleep between variants — lets Metal cool between large model loads
+
+
+def _infer(model, tokenizer, utterance: str) -> tuple[str, dict | None]:
+    """Run one inference pass. Returns (raw_output, parsed dict or None)."""
+    prompt = f"Command: {utterance}\nAction: "
+    output_tokens: list[str] = []
+    for response in stream_generate(
+        model,
+        tokenizer,
+        prompt,
+        max_tokens=MAX_TOKENS,
+        sampler=make_sampler(temp=0.0),
+    ):
+        output_tokens.append(response.text)
+        if response.finish_reason is not None:
+            break
+    raw = "".join(output_tokens)
+    return raw, parse_action(raw)
+
+
+def _print_table(variant_key: str, results: list[dict]) -> None:
+    categories = ["asr_noise", "ambiguous", "ood_intent", "adversarial"]
+    print(f"\nVariant: {variant_key}")
+    print("─" * 48)
+    print(f"{'Category':<16} {'Cases':>5} {'Pass':>5} {'Pass%':>7}")
+    print("─" * 48)
+    total_cases = total_pass = 0
+    for cat in categories:
+        cat_results = [r for r in results if r["category"] == cat]
+        n = len(cat_results)
+        p = sum(1 for r in cat_results if r["passed"])
+        total_cases += n
+        total_pass += p
+        pct = 100 * p / n if n else 0.0
+        print(f"{cat:<16} {n:>5} {p:>5} {pct:>6.1f}%")
+    print("─" * 48)
+    pct = 100 * total_pass / total_cases if total_cases else 0.0
+    print(f"{'Overall':<16} {total_cases:>5} {total_pass:>5} {pct:>6.1f}%")
+
+
+def _save_predictions(variant_key: str, results: list[dict]) -> None:
+    out_dir = get_data_dir() / "results" / "red_team"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"{variant_key}.jsonl"
+    with out_path.open("w") as f:
+        for r in results:
+            f.write(json.dumps(r) + "\n")
+    logger.info("Saved %d results to %s", len(results), out_path)
+
+
+def run_red_team(variant_key: str, models_dir: Path | None = None) -> dict:
+    """Red team a single variant. Returns summary dict with variant/total/passed."""
+    if models_dir is None:
+        models_dir = get_models_dir()
+    variants = build_variants(models_dir)
+    if variant_key not in variants:
+        raise KeyError(
+            f"Unknown variant '{variant_key}'. Choose from: {list(variants)}"
+        )
+    model_path = variants[variant_key]
+    if not model_path.exists():
+        raise FileNotFoundError(f"Model not found at {model_path}")
+
+    logger.info("=== Red team: %s ===", variant_key)
+    model, tokenizer = load(str(model_path))
+
+    results: list[dict] = []
+    for case in RED_TEAM_CASES:
+        raw, parsed = _infer(model, tokenizer, case["input"])
+        parse_failed = parsed is None
+        pred_intent = parsed.get("intent") if parsed else None
+        pred_slots = (parsed.get("slots") or {}) if parsed else {}
+        pred_slots_filtered = (
+            filter_slots(pred_intent, pred_slots) if pred_intent else pred_slots
+        )
+        passed = _pass_for_case(case, pred_intent, parse_failed)
+        results.append(
+            {
+                "category": case["category"],
+                "input": case["input"],
+                "description": case["description"],
+                "expected_intent": case["expected_intent"],
+                "pred_intent": pred_intent,
+                "pred_slots": pred_slots,
+                "pred_slots_filtered": pred_slots_filtered,
+                "raw_output": raw.strip(),
+                "parse_failed": parse_failed,
+                "passed": passed,
+            }
+        )
+
+    _print_table(variant_key, results)
+    _save_predictions(variant_key, results)
+
+    del model
+    gc.collect()
+    mx.clear_cache()
+
+    return {
+        "variant": variant_key,
+        "total": len(results),
+        "passed": sum(1 for r in results if r["passed"]),
+    }
+
+
+def red_team_all(models_dir: Path | None = None) -> list[dict]:
+    """Red team all 9 variants sequentially with a cooldown between loads."""
+    if models_dir is None:
+        models_dir = get_models_dir()
+    variants = build_variants(models_dir)
+    summaries: list[dict] = []
+    keys = list(variants.keys())
+    for i, vk in enumerate(keys):
+        summaries.append(run_red_team(vk, models_dir=models_dir))
+        if i < len(keys) - 1:
+            logger.info("Cooling down %ds...", _COOLDOWN_S)
+            time.sleep(_COOLDOWN_S)
+    return summaries
+
+
+if __name__ == "__main__":
+    red_team_all()
