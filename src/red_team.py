@@ -115,7 +115,7 @@ RED_TEAM_CASES: list[dict] = [
     {
         "category": "ambiguous",
         "input": "Go faster",
-        "expected_intent": "cruise_control",
+        "expected_intent": "drive_mode",
         "description": "implicit slot",
     },
     {
